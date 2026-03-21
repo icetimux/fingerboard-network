@@ -15,7 +15,7 @@ const dbPromise = open({
       url TEXT,
       duration INTEGER DEFAULT 180,
       status TEXT DEFAULT 'pending',
-      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);
 })();
