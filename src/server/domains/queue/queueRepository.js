@@ -1,43 +1,32 @@
-import db from '../../config/db.js';
+import dbPromise from '../../config/db.js';
 
 export const queueRepository = {
-  getApproved() {
-    return new Promise((resolve, reject) => {
-      db.all("SELECT * FROM videos WHERE status='approved' ORDER BY id", (err, rows) => {
-        if (err) reject(err);
-        else resolve(rows);
-      });
-    });
+  async getApproved() {
+    const db = await dbPromise;
+    return db.all("SELECT * FROM videos WHERE status='approved' ORDER BY id");
   },
 
-  getNext(currentId) {
-    return new Promise((resolve, reject) => {
-      db.get(
-        "SELECT * FROM videos WHERE status='approved' AND id > ? ORDER BY id LIMIT 1",
-        [currentId || 0],
-        (err, row) => err ? reject(err) : resolve(row)
-      );
-    });
+  async getNext(currentId) {
+    const db = await dbPromise;
+    return db.get(
+      "SELECT * FROM videos WHERE status='approved' AND id > ? ORDER BY id LIMIT 1",
+      [currentId || 0]
+    );
   },
 
-  insertPending(url) {
-    return new Promise((resolve, reject) => {
-      db.run("INSERT INTO videos (url, status='pending') VALUES (?)", [url], function(err) {
-        if (err) reject(err);
-        else resolve(this.lastID);
-      });
-    });
+  async insertPending(url) {
+    const db = await dbPromise;
+    const result = await db.run("INSERT INTO videos (url) VALUES (?)", [url]);
+    return result.lastID;
   },
 
-  approve(id) {
-    return new Promise((resolve, reject) => {
-      db.run("UPDATE videos SET status='approved' WHERE id=?", [id], err => err ? reject(err) : resolve());
-    });
+  async approve(id) {
+    const db = await dbPromise;
+    await db.run("UPDATE videos SET status='approved' WHERE id=?", [id]);
   },
 
-  getVideoById(id) {
-    return new Promise((resolve, reject) => {
-      db.get("SELECT * FROM videos WHERE id=?", [id], (err, row) => err ? reject(err) : resolve(row));
-    });
+  async getVideoById(id) {
+    const db = await dbPromise;
+    return db.get("SELECT * FROM videos WHERE id=?", [id]);
   }
 };

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Socket Test</title>
+
+</head>
+<body>
+  <h1>Socket Test</h1>
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+
+    socket.on("connect", () => {
+      console.log("connected", socket.id);
+    });
+
+    socket.on("state", (data) => {
+      console.log("state:", data);
+    });
+
+    socket.on("queue", (data) => {
+      console.log("queue:", data);
+    });
+
+    socket.on("chat:message", (msg) => {
+      console.log("chat:", msg);
+    });
+  </script>
+</body>
+</html>
