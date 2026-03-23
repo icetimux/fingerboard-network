@@ -7,6 +7,8 @@
   "type": "module",
   "main": "src/server/index.js",
   "scripts": {
+    "dev": "nodemon src/server/index.js",
+    "start": "node src/server/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
@@ -15,5 +17,8 @@
     "socket.io": "^4.8.3",
     "sqlite": "^5.1.1",
     "sqlite3": "^6.0.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.0"
   }
 }
