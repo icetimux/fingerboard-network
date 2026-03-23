@@ -5,6 +5,13 @@ export async function getQueue() {
   return queueRepository.getQueue();
 }
 
+export async function enqueue(mediaId, type = 'video') {
+  const queueId = await queueRepository.enqueue(mediaId, type);
+  const queue = await getQueue();
+  ioInstance.emit('queue', queue);
+  return queueId;
+}
+
 export async function getNextVideo(currentId) {
   return queueRepository.getNext(currentId);
 }
@@ -16,10 +23,3 @@ export async function insertPending(url) {
 export async function getVideoById(id) {
   return queueRepository.getVideoById(id);
 }
-
-// export async function approve(id) {
-//   await queueRepository.approve(id);
-//   const queue = await getQueue();
-//   ioInstance.emit('queue', queue);
-// }
-

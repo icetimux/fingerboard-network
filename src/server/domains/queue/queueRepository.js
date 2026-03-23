@@ -6,6 +6,15 @@ export const queueRepository = {
     return db.all("SELECT * FROM queue ORDER BY id");
   },
 
+  async enqueue(mediaId, type = 'normal') {
+    const db = await dbPromise;
+    const result = await db.run(
+      "INSERT INTO queue (media_id, type) VALUES (?, ?)",
+      [mediaId, type]
+    );
+    return result.lastID;
+  },
+
   async getNext(currentId) {
     const db = await dbPromise;
     return db.get(

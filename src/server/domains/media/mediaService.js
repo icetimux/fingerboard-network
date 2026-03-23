@@ -3,6 +3,7 @@ import PQueue from 'p-queue';
 import { mediaRepository } from './mediaRepository.js';
 import { downloadVideo } from './downloader.js';
 import { ioInstance } from '../../sockets/socketHandler.js';
+import { enqueue } from '../queue/queueService.js';
 
 const VIDEO_DIR = './videos';
 
@@ -30,8 +31,6 @@ async function processVideo(url) {
 
     await mediaRepository.setReady(videoId, filePath);
 
-    // await queueService.enqueue(videoId); // doenst exist
-
     // 🔔 notify ready
     ioInstance?.emit('media:status', {
       videoId,
@@ -57,9 +56,8 @@ async function processVideo(url) {
 
 export async function approve(videoId) {
   await mediaRepository.setApproved(videoId);
-  // TODO: move to queue now.
-//   const queue = await getQueue(); // aldo dont think i need to do this
-//   ioInstance.emit('queue', queue); // dont think i need to do this
+  // Move to queue now, use media id as fk in queue table
+  await enqueue(videoId);
 }
 
 export const mediaService = {
