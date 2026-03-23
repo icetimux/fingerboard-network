@@ -16,10 +16,6 @@ export async function getNextVideo(currentId) {
   return queueRepository.getNext(currentId);
 }
 
-export async function insertPending(url) {
-  return queueRepository.insertPending(url);
-}
-
 export async function getVideoById(id) {
   return queueRepository.getVideoById(id);
 }

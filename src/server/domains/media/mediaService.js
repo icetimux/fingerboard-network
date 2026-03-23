@@ -37,9 +37,6 @@ async function processVideo(url) {
       status: 'ready',
       filePath
     });
-
-    // refresh media for clients?
-    ioInstance?.emit('media:update');
   } catch (err) {
     await mediaRepository.setFailed(videoId, err.message);
 
