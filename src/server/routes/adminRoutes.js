@@ -1,9 +1,19 @@
 import express from 'express';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { basicAuth } from '../middleware/basicAuth.js';
 import { playbackController } from '../domains/playback/controller.js';
-import { getQueue, approve } from '../domains/queue/queueService.js';
+import { getQueue } from '../domains/queue/queueService.js';
+import {  approve } from '../domains/media/mediaService.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const router = express.Router();
+
+router.get('/', basicAuth, async (req, res) => {
+  res.sendFile(path.join(__dirname, '../../admin/index.html'));
+});
 
 // Get pending videos
 router.get('/pending', basicAuth, async (req, res) => {

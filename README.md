@@ -1,3 +1,12 @@
+---
+TODO
+- add bumps table that is like videos table but for bumps
+- write logic when queing that if table is empty, to try again but this time from the bumps
+  then it should start looping bumps until queue is populated
+- write chat window to start being able to send chat and commands and see response from server
+- when a video that is already in the media, dont download it and add id againt to avoid duplication
+---
+
 # Synchronized Video + Chat Server
 
 This Node.js project provides:
