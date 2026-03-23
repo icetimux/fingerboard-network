@@ -16,6 +16,14 @@ router.get('/', basicAuth, async (req, res) => {
   res.sendFile(path.join(__dirname, '../../admin/index.html'));
 });
 
+router.get('/submissions', basicAuth, async (req, res) => {
+  res.sendFile(path.join(__dirname, '../../admin/submissions.html'));
+});
+
+router.get('/queue', basicAuth, async (req, res) => {
+  res.sendFile(path.join(__dirname, '../../admin/queue.html'));
+});
+
 // Get pending videos
 router.get('/pending', basicAuth, async (req, res) => {
   try {
