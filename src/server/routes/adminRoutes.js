@@ -28,6 +28,17 @@ router.get('/pending', basicAuth, async (req, res) => {
   }
 });
 
+// Get queue
+router.get('/queue', basicAuth, async (req, res) => {
+  try {
+    const queue = await getQueue();
+    res.json(queue);
+  } catch (error) {
+    console.error('Error fetching queue:', error);
+    res.status(500).json({ error: 'Failed to fetch queue' });
+  }
+});
+
 // Approve video
 router.post('/approve/:id', basicAuth, async (req, res) => {
   try {
