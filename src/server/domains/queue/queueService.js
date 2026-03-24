@@ -1,6 +1,10 @@
 import { queueRepository } from './queueRepository.js';
 import { ioInstance } from '../../sockets/socketHandler.js';
 
+export async function getVideoWithMedia(id) {
+  return queueRepository.getVideoWithMedia(id);
+}
+
 export async function getQueueWithMedia() {
   return queueRepository.getQueueWithMedia();
 }

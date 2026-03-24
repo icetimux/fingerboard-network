@@ -161,10 +161,11 @@
 <body class="h-screen flex flex-col">
 <!-- Minimal Top Bar -->
 <header class="h-14 border-b border-white/5 bg-surface-container flex items-center justify-between shrink-0 z-40 pl-4 pr-6">
-<div class="flex items-center gap-2">
+<div class="flex items-center gap-3">
 <div class="flex items-center justify-center border-2 border-white px-2 py-0.5">
 <span class="text-xs font-black tracking-tighter text-white uppercase font-sans">FBN</span>
 </div>
+<span class="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-red-400"><span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span> Live</span>
 </div>
 <button class="w-8 h-8 rounded-full bg-surface-variant flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors" onclick="document.getElementById('auth-modal').classList.remove('hidden')">
 <span class="material-symbols-outlined text-xl">account_circle</span>
@@ -191,17 +192,7 @@
   allow="autoplay; encrypted-media; picture-in-picture"
   allowfullscreen>
 </iframe> -->
-<div class="w-full h-full pointer-events-none">
-  <iframe
-    id="yt-player"
-    class="w-full h-full"
-    src="https://www.youtube.com/embed/b2_f6qW0zM8?enablejsapi=1&start=20&autoplay=0&mute=1&controls=0&rel=0&modestbranding=1&playsinline=1"
-    title="YouTube video player"
-    frameborder="0"
-    allow="autoplay; encrypted-media; picture-in-picture"
-    allowfullscreen>
-  </iframe>
-</div>
+<video id="player" class="w-full h-full object-contain" playsinline muted></video>
 <!-- Minimal Overlay Controls -->
 </div>
 <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 via-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
@@ -371,7 +362,6 @@
             loginContent.classList.add('hidden');
         }
     }</script>
-<script src="https://www.youtube.com/iframe_api"></script>
 <script>
 // ========== CHAT FUNCTIONALITY ==========
 let socket;
@@ -424,6 +414,8 @@ function initChat() {
     displayChatMessage('System', msg.text, true);
   });
 
+  socket.on('state', handleState);
+
   // Handle Enter key in input
   const chatInput = document.getElementById('chat-input');
   chatInput.addEventListener('keypress', (e) => {
@@ -469,60 +461,57 @@ function displayChatMessage(username, text, isSystem, color) {
 // Initialize chat when page loads
 window.addEventListener('DOMContentLoaded', initChat);
 
-// ========== VIDEO PLAYER FUNCTIONALITY ==========
+// ========== VIDEO PLAYER ==========
+let video;
+let currentFilePath = null;
 
-let player;
+function handleState(state) {
+  const playIcon = document.querySelector('#play_arrow span');
+  if (playIcon) playIcon.textContent = state.playing ? 'pause' : 'play_arrow';
 
-// 1️⃣ This function is called by YouTube API once ready
-function onYouTubeIframeAPIReady() {
-  player = new YT.Player('yt-player', {
-    events: {
-      'onReady': onPlayerReady
-    }
-  });
-}
+  if (!state.filePath) return;
 
-// 2️⃣ Once player is ready, hook up buttons
-function onPlayerReady(event) {
-  // Play/Pause button
-  const playBtn = document.querySelector('#play_arrow');
-  if (playBtn) {
-  playBtn.addEventListener('click', () => {
-    console.log('clicked play button');
-
-    const state = player.getPlayerState();
-
-    if (state === YT.PlayerState.PLAYING) {
-      player.pauseVideo();
-      playBtn.querySelector('span').innerText = 'play_arrow';
+  if (currentFilePath !== state.filePath) {
+    currentFilePath = state.filePath;
+    video.src = state.filePath;
+    video.load();
+    video.addEventListener('loadedmetadata', () => {
+      const elapsed = state.playing
+        ? (Date.now() - state.startedAt) / 1000
+        : state.pausedAt;
+      video.currentTime = Math.max(0, elapsed);
+      if (state.playing) video.play().catch(() => {});
+    }, { once: true });
+  } else {
+    const elapsed = state.playing
+      ? (Date.now() - state.startedAt) / 1000
+      : state.pausedAt;
+    video.currentTime = Math.max(0, elapsed);
+    if (state.playing) {
+      video.play().catch(() => {});
     } else {
-      player.playVideo();
-      playBtn.querySelector('span').innerText = 'pause';
+      video.pause();
     }
-  });
+  }
 }
 
-  // Volume button & slider
+window.addEventListener('DOMContentLoaded', () => {
+  video = document.getElementById('player');
+
+  // Volume
   const volumeBtn = document.querySelector('#volume_up')?.parentElement;
   const volumeSlider = document.querySelector('#volume_range');
   if (volumeBtn) {
-    volumeBtn.addEventListener('click', () => {
-      if (player.isMuted()) {
-        player.unMute();
-        // volumeBtn.querySelector('span').innerText = 'volume_up';
-      } else {
-        player.mute();
-        // volumeBtn.querySelector('span').innerText = 'volume_off';
-      }
-    });
+    volumeBtn.addEventListener('click', () => { video.muted = !video.muted; });
   }
   if (volumeSlider) {
     volumeSlider.addEventListener('input', (e) => {
-      player.setVolume(e.target.value);
+      video.volume = e.target.value / 100;
+      video.muted = false;
     });
   }
 
-  // Fullscreen button
+  // Fullscreen
   const fullscreenBtn = document.querySelector('#fullscreen')?.parentElement;
   if (fullscreenBtn) {
     fullscreenBtn.addEventListener('click', () => {
@@ -534,6 +523,6 @@ function onPlayerReady(event) {
       }
     });
   }
-}
+});
 </script>
 </body></html>

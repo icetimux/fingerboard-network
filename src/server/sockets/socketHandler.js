@@ -1,5 +1,5 @@
 import { handleChat } from '../domains/chat/chatHandler.js';
-import { state } from '../domains/playback/state.js';
+import { buildEnrichedState } from '../domains/playback/controller.js';
 import { getQueue } from '../domains/queue/queueService.js';
 import dbPromise from '../config/db.js';
 
@@ -29,7 +29,7 @@ export function initSockets(io) {
     socket.userColor = userColor;
 
     // Send initial state, queue, and chat history
-    socket.emit('state', state);
+    socket.emit('state', await buildEnrichedState());
     socket.emit('queue', await getQueue());
 
     // Send chat history

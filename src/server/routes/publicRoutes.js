@@ -19,4 +19,7 @@ router.get('/debug', (req, res) => {
 // Optionally serve static assets (JS, CSS, etc.)
 router.use('/static', express.static(path.join(__dirname, '../../client')));
 
+// Serve downloaded videos
+router.use('/videos', express.static(path.resolve('./videos')));
+
 export default router;

@@ -17,6 +17,16 @@ export const queueRepository = {
     return db.all("SELECT * FROM queue ORDER BY id");
   },
 
+  async getVideoWithMedia(id) {
+    const db = await dbPromise;
+    return db.get(`
+      SELECT q.*, m.file_path, m.url
+      FROM queue q
+      JOIN media m ON m.id = q.media_id
+      WHERE q.id = ?
+    `, [id]);
+  },
+
   async enqueue(mediaId, type = 'normal') {
     const db = await dbPromise;
     const result = await db.run(
