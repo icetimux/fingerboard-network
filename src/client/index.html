@@ -235,30 +235,14 @@
 <span class="material-symbols-outlined text-sm group-hover:scale-110 transition-transform" id="toggle-icon">chevron_right</span>
 </button>
 <!-- Messages -->
-<div class="flex-grow overflow-y-auto chat-scroll p-6 space-y-6">
-<div class="space-y-1">
-<p class="text-[11px] font-bold text-primary-fixed/70">Sarah M.</p>
-<p class="text-sm text-on-surface/90 leading-relaxed">This scene always gives me chills. The music is incredible! 🌌</p>
-</div>
-<div class="space-y-1">
-<p class="text-[11px] font-bold text-secondary-fixed/70">Alex Chen</p>
-<p class="text-sm text-on-surface/90 leading-relaxed">The docking scene coming up... absolute peak cinema.</p>
-</div>
-<div class="space-y-1">
-<p class="text-[11px] font-bold text-tertiary-fixed/70">Riley</p>
-<p class="text-sm text-on-surface/90 leading-relaxed">Wait, is that a real practical effect or CGI?</p>
-</div>
-<div class="space-y-1">
-<p class="text-[11px] font-bold text-primary-fixed/70">Sarah M.</p>
-<p class="text-sm text-on-surface/90 leading-relaxed">Mostly practical! They built giant models.</p>
-</div>
+<div class="flex-grow overflow-y-auto chat-scroll p-6 space-y-4" id="chat-messages">
 </div>
 <!-- Simple Input -->
 <div class="p-6 border-t border-white/5">
 <div class="relative">
 <div class="flex flex-col gap-1.5">
-<span class="text-[10px] font-bold uppercase tracking-[0.1em] text-on-surface-variant/50 ml-0.5">ANONYMOUS</span>
-<input class="w-full bg-surface-variant/50 border-none rounded-lg py-3.5 px-4 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:ring-1 focus:ring-primary/30 transition-all" placeholder="Message..." type="text"/>
+<span class="text-[10px] font-bold uppercase tracking-[0.1em] text-on-surface-variant/50 ml-0.5" id="username-display">ANONYMOUS</span>
+<input class="w-full bg-surface-variant/50 border-none rounded-lg py-3.5 px-4 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:ring-1 focus:ring-primary/30 transition-all" placeholder="Message..." type="text" id="chat-input" />
 </div>
 </div>
 </div>
@@ -389,6 +373,104 @@
     }</script>
 <script src="https://www.youtube.com/iframe_api"></script>
 <script>
+// ========== CHAT FUNCTIONALITY ==========
+let socket;
+let userUsername;
+let userColor;
+
+// Color palette for usernames
+const colorPalette = [
+  'text-primary-fixed',
+  'text-secondary-fixed',
+  'text-tertiary-fixed',
+  'text-primary',
+  'text-secondary',
+  'text-error'
+];
+
+function initChat() {
+  socket = io();
+
+  // On connection, get assigned color
+  socket.on('user:color', (data) => {
+    userColor = data.color;
+    userUsername = `Anonymous ${socket.id.substring(0, 5)}`;
+    
+    // Update username display with assigned color
+    const usernameDisplay = document.getElementById('username-display');
+    usernameDisplay.textContent = userUsername.toUpperCase();
+    usernameDisplay.className = `text-[10px] font-bold uppercase tracking-[0.1em] ${userColor} ml-0.5`;
+    
+    console.log(`Connected as: ${userUsername} with color: ${userColor}`);
+  });
+
+  // Receive chat history on connect
+  socket.on('chat:history', (messages) => {
+    const chatMessages = document.getElementById('chat-messages');
+    chatMessages.innerHTML = ''; // Clear placeholder
+    
+    messages.forEach((msg) => {
+      displayChatMessage(msg.user, msg.text, false, msg.color);
+    });
+  });
+
+  // Listen for chat messages from other users
+  socket.on('chat:message', (msg) => {
+    displayChatMessage(msg.user, msg.text, false, msg.color);
+  });
+
+  // Listen for system messages from server (user-only messages)
+  socket.on('chat:system', (msg) => {
+    displayChatMessage('System', msg.text, true);
+  });
+
+  // Handle Enter key in input
+  const chatInput = document.getElementById('chat-input');
+  chatInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter' && chatInput.value.trim()) {
+      const messageText = chatInput.value.trim();
+      
+      // Send to server
+      socket.emit('chat:message', {
+        user: userUsername,
+        text: messageText,
+        timestamp: Date.now()
+      });
+      
+      // Clear input
+      chatInput.value = '';
+    }
+  });
+}
+
+function displayChatMessage(username, text, isSystem, color) {
+  const chatMessages = document.getElementById('chat-messages');
+  
+  const messageDiv = document.createElement('div');
+  messageDiv.className = 'space-y-1';
+  
+  const usernameEl = document.createElement('p');
+  usernameEl.className = `text-[11px] font-bold ${isSystem ? 'text-on-surface-variant' : (color || 'text-primary')} opacity-70`;
+  usernameEl.textContent = username;
+  
+  const textEl = document.createElement('p');
+  textEl.className = 'text-sm text-on-surface/90 leading-relaxed';
+  textEl.textContent = text;
+  
+  messageDiv.appendChild(usernameEl);
+  messageDiv.appendChild(textEl);
+  
+  chatMessages.appendChild(messageDiv);
+  
+  // Auto-scroll to bottom
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+// Initialize chat when page loads
+window.addEventListener('DOMContentLoaded', initChat);
+
+// ========== VIDEO PLAYER FUNCTIONALITY ==========
+
 let player;
 
 // 1️⃣ This function is called by YouTube API once ready

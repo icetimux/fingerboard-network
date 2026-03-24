@@ -30,6 +30,17 @@ const dbPromise = open({
       FOREIGN KEY (media_id) REFERENCES media(id) ON DELETE CASCADE
     )
   `);
+
+  await db.run(`
+    CREATE TABLE IF NOT EXISTS messages (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user TEXT,
+      text TEXT,
+      color TEXT,
+      timestamp INTEGER,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
 })();
 
 export default dbPromise;
