@@ -165,7 +165,7 @@
 <div class="flex items-center justify-center border-2 border-white px-2 py-0.5">
 <span class="text-xs font-black tracking-tighter text-white uppercase font-sans">FBN</span>
 </div>
-<span class="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-red-400"><span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span> Live</span>
+<!-- <span class="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-red-400"><span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span> Live</span> -->
 </div>
 <button class="w-8 h-8 rounded-full bg-surface-variant flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors" onclick="document.getElementById('auth-modal').classList.remove('hidden')">
 <span class="material-symbols-outlined text-xl">account_circle</span>
@@ -502,6 +502,11 @@ window.addEventListener('DOMContentLoaded', () => {
   if (volumeBtn) {
     volumeBtn.addEventListener('click', () => {
       video.muted = !video.muted;
+      if (!video.muted && (!volumeSlider || volumeSlider.value === '0')) {
+        video.volume = 0.5;
+        if (volumeSlider) volumeSlider.value = 50;
+      }
+      if (volumeSlider && video.muted) volumeSlider.value = 0;
       if (volumeIcon) volumeIcon.textContent = video.muted ? 'volume_off' : 'volume_up';
     });
   }

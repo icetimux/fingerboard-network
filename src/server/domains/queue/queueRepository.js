@@ -46,6 +46,11 @@ export const queueRepository = {
 
   async getVideoById(id) {
     const db = await dbPromise;
-    return db.get("SELECT * FROM queue WHERE id=?", [id]);
+    return db.get(`
+      SELECT q.*, m.duration, m.file_path, m.url
+      FROM queue q
+      JOIN media m ON m.id = q.media_id
+      WHERE q.id = ?
+    `, [id]);
   }
 };
