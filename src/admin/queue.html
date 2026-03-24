@@ -117,21 +117,21 @@
 <!-- Control Bar -->
 <div class="flex items-center justify-between mb-8 bg-surface-container-low p-4 rounded-xl">
 <div class="flex items-center gap-3">
-<button class="flex items-center gap-2 px-6 py-2.5 bg-surface-container-lowest text-primary font-bold rounded-lg shadow-sm hover:bg-primary hover:text-on-primary transition-all duration-300" style="">
-<span class="material-symbols-outlined" style="font-variation-settings: &quot;FILL&quot; 1;">play_circle</span>
-                    Play/Pause
-                </button>
-<button class="flex items-center gap-2 px-6 py-2.5 bg-surface-container-lowest text-on-surface-variant font-semibold rounded-lg shadow-sm hover:bg-surface-container-high transition-all" style="">
-<span class="material-symbols-outlined" style="">skip_next</span>
-                    Skip
-                </button>
-<button class="flex items-center gap-2 px-6 py-2.5 bg-surface-container-lowest text-on-surface-variant font-semibold rounded-lg shadow-sm hover:bg-surface-container-high transition-all" style="">
-<span class="material-symbols-outlined" style="">rebase_edit</span>
-                    Bump Loop
-                </button>
+<button id="playPauseBtn" onclick="togglePlayPause()" class="flex items-center gap-2 px-6 py-2.5 bg-surface-container-lowest text-primary font-bold rounded-lg shadow-sm hover:bg-primary hover:text-on-primary transition-all duration-300">
+<span id="playPauseIcon" class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">play_circle</span>
+<span id="playPauseLabel">Play</span>
+</button>
+<button onclick="skipVideo()" class="flex items-center gap-2 px-6 py-2.5 bg-surface-container-lowest text-on-surface-variant font-semibold rounded-lg shadow-sm hover:bg-surface-container-high transition-all">
+<span class="material-symbols-outlined">skip_next</span>
+Skip
+</button>
+<button disabled class="flex items-center gap-2 px-6 py-2.5 bg-surface-container-lowest text-on-surface-variant/40 font-semibold rounded-lg shadow-sm cursor-not-allowed">
+<span class="material-symbols-outlined">rebase_edit</span>
+Bump Loop
+</button>
 </div>
 <div class="flex items-center gap-4 text-xs font-bold text-on-surface-variant uppercase tracking-widest px-4">
-<span class="flex items-center gap-1.5" style=""><span class="w-2 h-2 rounded-full bg-green-500"></span> Live</span>
+<span id="liveIndicator" class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-gray-400"></span> Idle</span>
 </div>
 </div>
 <!-- Dashboard Content: Data Table -->
@@ -139,114 +139,114 @@
 <table class="w-full text-left border-collapse">
 <thead>
 <tr class="bg-surface-container/50">
-<th class="px-8 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant font-manrope">ID</th>
-<th class="px-8 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant font-manrope">Video File Name</th>
+<th class="px-8 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant font-manrope">Queue ID</th>
+<th class="px-8 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant font-manrope">Media ID</th>
+<th class="px-8 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant font-manrope">File Path</th>
 <th class="px-8 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant font-manrope">URL</th>
-<th class="px-8 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant font-manrope text-right">Actions</th>
+<th class="px-8 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant font-manrope">Added</th>
 </tr>
 </thead>
-<tbody class="divide-y divide-surface-container">
-<!-- Row 1 -->
-<tr class="group hover:bg-surface-container-low transition-colors">
-<td class="px-8 py-6 text-sm font-medium text-on-surface-variant font-body">#VID-001</td>
-<td class="px-8 py-6">
-<div>
-<p class="font-semibold text-on-surface font-manrope">urban_flow_v1.mp4</p>
-</div>
-</td>
-<td class="px-8 py-6">
-<a class="text-sm text-primary hover:underline font-medium font-body truncate max-w-xs block" href="#">https://storage.cdn/assets/u...</a>
-</td>
-<td class="px-8 py-6 text-right">
-<div class="flex items-center justify-end gap-3">
-<button class="px-4 py-2 text-sm font-semibold text-secondary hover:bg-surface-container rounded-lg transition-all active:scale-95 flex items-center gap-2">
-<span class="material-symbols-outlined text-lg" data-icon="visibility">visibility</span>
-                                        View
-                                    </button>
-<button class="px-5 py-2 text-sm font-semibold bg-primary text-on-primary rounded-lg shadow-sm hover:shadow-md transition-all active:scale-95 flex items-center gap-2">
-<span class="material-symbols-outlined text-lg" data-icon="check_circle">check_circle</span>
-                                        Approve
-                                    </button>
-</div>
-</td>
-</tr>
-<!-- Row 2 -->
-<tr class="group hover:bg-surface-container-low transition-colors">
-<td class="px-8 py-6 text-sm font-medium text-on-surface-variant font-body">#VID-002</td>
-<td class="px-8 py-6">
-<div>
-<p class="font-semibold text-on-surface font-manrope">nature_doc_cut.mp4</p>
-</div>
-</td>
-<td class="px-8 py-6">
-<a class="text-sm text-primary hover:underline font-medium font-body truncate max-w-xs block" href="#">https://storage.cdn/assets/n...</a>
-</td>
-<td class="px-8 py-6 text-right">
-<div class="flex items-center justify-end gap-3">
-<button class="px-4 py-2 text-sm font-semibold text-secondary hover:bg-surface-container rounded-lg transition-all active:scale-95 flex items-center gap-2">
-<span class="material-symbols-outlined text-lg" data-icon="visibility">visibility</span>
-                                        View
-                                    </button>
-<button class="px-5 py-2 text-sm font-semibold bg-primary text-on-primary rounded-lg shadow-sm hover:shadow-md transition-all active:scale-95 flex items-center gap-2">
-<span class="material-symbols-outlined text-lg" data-icon="check_circle">check_circle</span>
-                                        Approve
-                                    </button>
-</div>
-</td>
-</tr>
-<!-- Row 3 -->
-<tr class="group hover:bg-surface-container-low transition-colors">
-<td class="px-8 py-6 text-sm font-medium text-on-surface-variant font-body">#VID-003</td>
-<td class="px-8 py-6">
-<div>
-<p class="font-semibold text-on-surface font-manrope">interview_raw_04.mp4</p>
-<p class="text-xs text-on-surface-variant">89.2 MB • 4K Log</p>
-</div>
-</td>
-<td class="px-8 py-6">
-<a class="text-sm text-primary hover:underline font-medium font-body truncate max-w-xs block" href="#">https://storage.cdn/assets/i...</a>
-</td>
-<td class="px-8 py-6 text-right">
-<div class="flex items-center justify-end gap-3">
-<button class="px-4 py-2 text-sm font-semibold text-secondary hover:bg-surface-container rounded-lg transition-all active:scale-95 flex items-center gap-2">
-<span class="material-symbols-outlined text-lg" data-icon="visibility">visibility</span>
-                                        View
-                                    </button>
-<button class="px-5 py-2 text-sm font-semibold bg-primary text-on-primary rounded-lg shadow-sm hover:shadow-md transition-all active:scale-95 flex items-center gap-2">
-<span class="material-symbols-outlined text-lg" data-icon="check_circle">check_circle</span>
-                                        Approve
-                                    </button>
-</div>
-</td>
-</tr>
-<!-- Row 4 -->
-<tr class="group hover:bg-surface-container-low transition-colors">
-<td class="px-8 py-6 text-sm font-medium text-on-surface-variant font-body">#VID-004</td>
-<td class="px-8 py-6">
-<div>
-<p class="font-semibold text-on-surface font-manrope">branding_teaser_final.mp4</p>
-<p class="text-xs text-on-surface-variant">15.4 MB • 1080p H.264</p>
-</div>
-</td>
-<td class="px-8 py-6">
-<a class="text-sm text-primary hover:underline font-medium font-body truncate max-w-xs block" href="#">https://storage.cdn/assets/b...</a>
-</td>
-<td class="px-8 py-6 text-right">
-<div class="flex items-center justify-end gap-3">
-<button class="px-4 py-2 text-sm font-semibold text-secondary hover:bg-surface-container rounded-lg transition-all active:scale-95 flex items-center gap-2">
-<span class="material-symbols-outlined text-lg" data-icon="visibility">visibility</span>
-                                        View
-                                    </button>
-<button class="px-5 py-2 text-sm font-semibold bg-primary text-on-primary rounded-lg shadow-sm hover:shadow-md transition-all active:scale-95 flex items-center gap-2">
-<span class="material-symbols-outlined text-lg" data-icon="check_circle">check_circle</span>
-                                        Approve
-                                    </button>
-</div>
-</td>
-</tr>
+<tbody id="queueTable" class="divide-y divide-surface-container">
+<!-- Rows populated by JS -->
 </tbody>
 </table>
 </div>
 </div>
 </main>
+<script>
+let isPlaying = false;
+
+function updatePlayPauseBtn(playing) {
+  isPlaying = playing;
+  const icon = document.getElementById('playPauseIcon');
+  const label = document.getElementById('playPauseLabel');
+  const indicator = document.getElementById('liveIndicator');
+  if (playing) {
+    icon.textContent = 'pause_circle';
+    label.textContent = 'Pause';
+    indicator.innerHTML = '<span class="w-2 h-2 rounded-full bg-green-500"></span> Live';
+  } else {
+    icon.textContent = 'play_circle';
+    label.textContent = 'Play';
+    indicator.innerHTML = '<span class="w-2 h-2 rounded-full bg-gray-400"></span> Idle';
+  }
+}
+
+async function togglePlayPause() {
+  try {
+    const endpoint = isPlaying ? '/admin/pause' : '/admin/play';
+    const res = await fetch(endpoint, { method: 'POST' });
+    if (!res.ok) return;
+    updatePlayPauseBtn(!isPlaying);
+  } catch (err) {
+    console.error('Error toggling play/pause:', err);
+  }
+}
+
+async function skipVideo() {
+  try {
+    await fetch('/admin/skip', { method: 'POST' });
+    loadQueue();
+  } catch (err) {
+    console.error('Error skipping:', err);
+  }
+}
+
+function formatDate(ts) {
+  if (!ts) return '—';
+  return new Date(ts).toLocaleString();
+}
+
+function truncate(str, max = 50) {
+  return str && str.length > max ? str.substring(0, max) + '...' : (str || '—');
+}
+
+async function loadPlaybackState() {
+  try {
+    const res = await fetch('/admin/playback-state');
+    if (!res.ok) return;
+    const s = await res.json();
+    updatePlayPauseBtn(s.playing);
+  } catch (err) {
+    console.error('Error loading playback state:', err);
+  }
+}
+
+async function loadQueue() {
+  try {
+    const res = await fetch('/admin/queue-data');
+    if (!res.ok) return;
+    const items = await res.json();
+    const tbody = document.getElementById('queueTable');
+    tbody.innerHTML = '';
+
+    if (items.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" class="px-8 py-10 text-center text-on-surface-variant">Queue is empty</td></tr>';
+      return;
+    }
+
+    items.forEach(item => {
+      const row = document.createElement('tr');
+      row.className = 'group hover:bg-surface-container-low transition-colors';
+      row.innerHTML = `
+        <td class="px-8 py-6 text-sm font-medium text-on-surface-variant font-body">${item.id}</td>
+        <td class="px-8 py-6 text-sm font-medium text-on-surface-variant font-body">${item.media_id}</td>
+        <td class="px-8 py-6 text-sm font-mono text-on-surface-variant">${item.file_path || '—'}</td>
+        <td class="px-8 py-6">
+          <a href="${item.url}" target="_blank" class="text-sm text-primary hover:underline font-medium break-all">${truncate(item.url)}</a>
+        </td>
+        <td class="px-8 py-6 text-sm text-on-surface-variant">${formatDate(item.added_at)}</td>
+      `;
+      tbody.appendChild(row);
+    });
+  } catch (err) {
+    console.error('Error loading queue:', err);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadPlaybackState();
+  loadQueue();
+});
+</script>
 </body></html>

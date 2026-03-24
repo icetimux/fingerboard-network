@@ -3,7 +3,8 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { basicAuth } from '../middleware/basicAuth.js';
 import { playbackController } from '../domains/playback/controller.js';
-import { getQueue } from '../domains/queue/queueService.js';
+import { state as playbackState } from '../domains/playback/state.js';
+import { getQueue, getQueueWithMedia } from '../domains/queue/queueService.js';
 import { approve } from '../domains/media/mediaService.js';
 import dbPromise from '../config/db.js';
 
@@ -36,15 +37,20 @@ router.get('/all', basicAuth, async (req, res) => {
   }
 });
 
-// Get queue
-router.get('/queue', basicAuth, async (req, res) => {
+// Get queue with media details
+router.get('/queue-data', basicAuth, async (req, res) => {
   try {
-    const queue = await getQueue();
+    const queue = await getQueueWithMedia();
     res.json(queue);
   } catch (error) {
     console.error('Error fetching queue:', error);
     res.status(500).json({ error: 'Failed to fetch queue' });
   }
+});
+
+// Get playback state
+router.get('/playback-state', basicAuth, (req, res) => {
+  res.json(playbackState);
 });
 
 // Approve video

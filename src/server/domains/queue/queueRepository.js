@@ -1,6 +1,17 @@
 import dbPromise from '../../config/db.js';
 
 export const queueRepository = {
+  async getQueueWithMedia() {
+    const db = await dbPromise;
+    return db.all(`
+      SELECT q.id, q.media_id, q.type, q.added_at,
+             m.url, m.file_path
+      FROM queue q
+      JOIN media m ON m.id = q.media_id
+      ORDER BY q.added_at DESC
+    `);
+  },
+
   async getQueue() {
     const db = await dbPromise;
     return db.all("SELECT * FROM queue ORDER BY id");
