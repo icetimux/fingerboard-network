@@ -34,11 +34,11 @@ export const mediaRepository = {
     );
   },
 
-  async setApproved(id, filePath) {
+  async setApproved(id) {
     const db = await dbPromise;
     await db.run(
-      "UPDATE media SET status='approved', file_path=? WHERE id=?",
-      [filePath, id]
+      "UPDATE media SET status='approved' WHERE id=?",
+      [id]
     );
   },
 };
