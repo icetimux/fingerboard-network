@@ -94,7 +94,7 @@ export async function downloadVideo(url, outputDir, videoId) {
       reject(new Error(`Failed to spawn yt-dlp process: ${err.message}`));
     });
 
-    proc.on('close', (code) => {
+    proc.on('close', async (code) => {
       clearTimeout(timeoutHandle);
 
       if (code === 0) {
@@ -102,7 +102,18 @@ export async function downloadVideo(url, outputDir, videoId) {
         if (!finalPath) {
           reject(new Error('Download completed but output file path not found'));
         } else {
-          resolve(finalPath);
+          const dir = path.dirname(finalPath);
+          const normalizedName = path.basename(finalPath)
+            .replace(/ /g, '_')
+            .toLowerCase();
+          const normalizedPath = path.join(dir, normalizedName);
+          try {
+            await fs.rename(finalPath, normalizedPath);
+          } catch (renameErr) {
+            reject(new Error(`Failed to normalize filename: ${renameErr.message}`));
+            return;
+          }
+          resolve(normalizedPath);
         }
       } else {
         const errorMsg = stderrOutput || `yt-dlp exited with code ${code}`;
