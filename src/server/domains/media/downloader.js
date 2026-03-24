@@ -74,10 +74,15 @@ export async function downloadVideo(url, outputDir, videoId) {
           }
         }
 
-        // Extract final file path
-        const fileMatch = text.match(/Destination: (.+)/);
-        if (fileMatch) {
-          finalPath = fileMatch[1].trim();
+        // Track intermediate destination and final merged path
+        const mergerMatch = text.match(/\[Merger\] Merging formats into "(.+)"/);
+        if (mergerMatch) {
+          finalPath = mergerMatch[1].trim();
+        } else {
+          const destMatch = text.match(/Destination: (.+)/);
+          if (destMatch) {
+            finalPath = destMatch[1].trim();
+          }
         }
       } catch (err) {
         console.error('Error processing stdout:', err);
@@ -85,8 +90,14 @@ export async function downloadVideo(url, outputDir, videoId) {
     });
 
     proc.stderr.on('data', (data) => {
-      stderrOutput += data.toString();
-      console.error('[yt-dlp stderr]', data.toString());
+      const text = data.toString();
+      stderrOutput += text;
+      // yt-dlp sometimes writes merger info to stderr
+      const mergerMatch = text.match(/\[Merger\] Merging formats into "(.+)"/);
+      if (mergerMatch) {
+        finalPath = mergerMatch[1].trim();
+      }
+      console.error('[yt-dlp stderr]', text);
     });
 
     proc.on('error', (err) => {
