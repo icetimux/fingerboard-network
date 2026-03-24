@@ -5,6 +5,7 @@ TODO
   then it should start looping bumps until queue is populated
 - write chat window to start being able to send chat and commands and see response from server
 - when a video that is already in the media, dont download it and add id againt to avoid duplication
+- add bumps for when queue ends, it will loop some bumps.
 ---
 
 # Synchronized Video + Chat Server
