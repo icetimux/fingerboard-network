@@ -198,9 +198,6 @@
 <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 via-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
 <div class="flex items-center justify-between w-full h-16 px-6">
 <div class="flex items-center gap-6">
-<button class="text-white/90 hover:text-primary transition-colors" id="play_arrow">
-<span class="material-symbols-outlined text-2xl fill-1">pause</span>
-</button>
 <div class="flex items-center gap-3">
 <button class="text-white/90 hover:text-primary transition-colors" id="volume_up">
 <span class="material-symbols-outlined text-2xl">volume_up</span>
@@ -466,9 +463,6 @@ let video;
 let currentFilePath = null;
 
 function handleState(state) {
-  const playIcon = document.querySelector('#play_arrow span');
-  if (playIcon) playIcon.textContent = state.playing ? 'pause' : 'play_arrow';
-
   if (!state.filePath) return;
 
   if (currentFilePath !== state.filePath) {
@@ -499,15 +493,23 @@ window.addEventListener('DOMContentLoaded', () => {
   video = document.getElementById('player');
 
   // Volume
-  const volumeBtn = document.querySelector('#volume_up')?.parentElement;
-  const volumeSlider = document.querySelector('#volume_range');
+  const volumeBtn = document.getElementById('volume_up');
+  const volumeIcon = volumeBtn?.querySelector('span');
+  const volumeSlider = document.getElementById('volume_range');
+  // Sync icon and slider with initial mute state (video starts muted for autoplay)
+  if (volumeIcon) volumeIcon.textContent = video.muted ? 'volume_off' : 'volume_up';
+  if (volumeSlider) volumeSlider.value = video.muted ? 0 : video.volume * 100;
   if (volumeBtn) {
-    volumeBtn.addEventListener('click', () => { video.muted = !video.muted; });
+    volumeBtn.addEventListener('click', () => {
+      video.muted = !video.muted;
+      if (volumeIcon) volumeIcon.textContent = video.muted ? 'volume_off' : 'volume_up';
+    });
   }
   if (volumeSlider) {
     volumeSlider.addEventListener('input', (e) => {
       video.volume = e.target.value / 100;
-      video.muted = false;
+      video.muted = e.target.value === '0';
+      if (volumeIcon) volumeIcon.textContent = video.muted ? 'volume_off' : 'volume_up';
     });
   }
 
