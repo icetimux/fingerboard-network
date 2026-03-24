@@ -1,7 +1,12 @@
 import { spawn } from 'child_process';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import fs from 'fs/promises';
 import { ioInstance } from '../../sockets/socketHandler.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const YT_DLP = path.resolve(__dirname, '../../../../bin/yt-dlp');
 
 const DOWNLOAD_TIMEOUT = 60 * 60 * 1000; // 1 hour timeout
 
@@ -37,7 +42,7 @@ export async function downloadVideo(url, outputDir, videoId) {
       reject(new Error('Download timeout exceeded'));
     }, DOWNLOAD_TIMEOUT);
 
-    const proc = spawn('yt-dlp', [
+    const proc = spawn(YT_DLP, [
       url,
       '-o',
       outputTemplate,
