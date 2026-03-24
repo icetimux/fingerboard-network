@@ -35,6 +35,7 @@
               "on-surface": "#0d1c2e",
               "on-primary-fixed": "#100069",
               "surface-container": "#e6eeff",
+              "on-surface-variant-dim": "#757684",
               "on-primary-container": "#d1cdff",
               "inverse-primary": "#c3c0ff",
               "secondary": "#565c84",
@@ -83,55 +84,52 @@
 </head>
 <body class="bg-surface text-on-surface antialiased min-h-screen">
 <!-- SideNavBar Shell -->
-<aside class="h-screen w-64 fixed left-0 top-0 border-r border-slate-200/20 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-[0_20px_40px_rgba(13,28,46,0.06)] flex flex-col p-6 z-20">
+<aside class="h-screen w-64 fixed left-0 top-0 border-r border-slate-200 bg-white dark:bg-slate-900 flex flex-col p-6 z-20">
 <div class="mb-10">
-<h2 class="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-50 font-manrope">Admin Panel</h2>
+<h2 class="text-xl font-bold tracking-tight text-on-surface font-manrope">Admin Panel</h2>
 </div>
 <nav class="flex-1 space-y-2">
 <!-- Active Navigation: Submissions -->
-<a class="flex items-center gap-3 p-3 bg-[#e3dfff] dark:bg-[#3324bc]/20 text-[#3324bc] dark:text-[#e3dfff] font-semibold rounded-lg transition-all duration-200 ease-in-out scale-95 active:scale-90" href="submissions">
+<a class="flex items-center gap-3 p-3 bg-primary/10 text-primary font-semibold rounded-lg transition-all duration-200 ease-in-out" href="submissions">
 <span class="material-symbols-outlined" data-icon="description">description</span>
 <span class="font-manrope text-sm font-medium">Submissions</span>
 </a>
-<a class="flex items-center gap-3 p-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-all duration-200 ease-in-out" href="queue">
+<!-- Link to Queue -->
+<a class="flex items-center gap-3 p-3 text-on-surface-variant hover:bg-surface-container transition-all duration-200 ease-in-out rounded-lg" href="queue">
 <span class="material-symbols-outlined" data-icon="hourglass_empty">hourglass_empty</span>
 <span class="font-manrope text-sm font-medium">Queue</span>
 </a>
 </nav>
 </aside>
-<!-- TopNavBar Shell (Search bar and right-side icons removed as requested) -->
-<header class="fixed top-0 right-0 w-[calc(100%-16rem)] z-10 bg-[#f8f9ff]/50 dark:bg-[#0d1c2e]/50 backdrop-blur-md flex justify-between items-center px-12 py-4 h-16">
-<div class="flex items-center flex-1 max-w-md"></div>
-<div class="flex items-center gap-6"></div>
+<!-- TopNavBar Shell (Simplified for consistency) -->
+<header class="fixed top-0 right-0 w-[calc(100%-16rem)] z-10 bg-surface/80 backdrop-blur-md flex justify-between items-center px-12 py-4 h-16 border-b border-surface-container">
+<div class="flex items-center flex-1"></div>
 </header>
 <!-- Main Content Canvas -->
 <main class="pt-24 pl-64 min-h-screen">
 <div class="px-12 max-w-7xl mx-auto">
-<!-- Page Header (Editorial Style) -->
-<div class="mb-12 ml-4">
-<!-- Breadcrumbs removed as requested -->
+<!-- Page Header -->
+<div class="mb-12">
 <h1 class="text-5xl font-extrabold tracking-tight text-on-surface font-manrope">Submissions</h1>
 </div>
 <!-- Dashboard Content: Data Table -->
-<div class="bg-surface-container-low rounded-xl p-1">
-<div class="bg-surface-container-lowest rounded-lg overflow-hidden">
+<div class="bg-surface-container-lowest rounded-xl shadow-sm border border-surface-container overflow-hidden">
 <table class="w-full text-left border-collapse">
 <thead>
-<tr class="bg-surface-container/30">
+<tr class="bg-surface-container/50">
 <th class="px-8 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant font-manrope">ID</th>
 <th class="px-8 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant font-manrope">Video File Name</th>
 <th class="px-8 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant font-manrope">URL</th>
 <th class="px-8 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant font-manrope text-right">Actions</th>
 </tr>
 </thead>
-<tbody class="divide-y divide-surface-container-low/50">
+<tbody class="divide-y divide-surface-container">
 <!-- Row 1 -->
-<tr class="group hover:bg-surface-container-low/30 transition-colors">
+<tr class="group hover:bg-surface-container-low transition-colors">
 <td class="px-8 py-6 text-sm font-medium text-on-surface-variant font-body">#VID-001</td>
 <td class="px-8 py-6">
 <div>
 <p class="font-semibold text-on-surface font-manrope">urban_flow_v1.mp4</p>
-<p class="text-xs text-on-surface-variant">24.5 MB • 4K H.264</p>
 </div>
 </td>
 <td class="px-8 py-6">
@@ -141,22 +139,21 @@
 <div class="flex items-center justify-end gap-3">
 <button class="px-4 py-2 text-sm font-semibold text-secondary hover:bg-surface-container rounded-lg transition-all active:scale-95 flex items-center gap-2">
 <span class="material-symbols-outlined text-lg" data-icon="visibility">visibility</span>
-                                            View
-                                        </button>
+                                        View
+                                    </button>
 <button class="px-5 py-2 text-sm font-semibold bg-primary text-on-primary rounded-lg shadow-sm hover:shadow-md transition-all active:scale-95 flex items-center gap-2">
 <span class="material-symbols-outlined text-lg" data-icon="check_circle">check_circle</span>
-                                            Approve
-                                        </button>
+                                        Approve
+                                    </button>
 </div>
 </td>
 </tr>
 <!-- Row 2 -->
-<tr class="group hover:bg-surface-container-low/30 transition-colors">
+<tr class="group hover:bg-surface-container-low transition-colors">
 <td class="px-8 py-6 text-sm font-medium text-on-surface-variant font-body">#VID-002</td>
 <td class="px-8 py-6">
 <div>
 <p class="font-semibold text-on-surface font-manrope">nature_doc_cut.mp4</p>
-<p class="text-xs text-on-surface-variant">112.8 MB • 1080p ProRes</p>
 </div>
 </td>
 <td class="px-8 py-6">
@@ -166,17 +163,17 @@
 <div class="flex items-center justify-end gap-3">
 <button class="px-4 py-2 text-sm font-semibold text-secondary hover:bg-surface-container rounded-lg transition-all active:scale-95 flex items-center gap-2">
 <span class="material-symbols-outlined text-lg" data-icon="visibility">visibility</span>
-                                            View
-                                        </button>
+                                        View
+                                    </button>
 <button class="px-5 py-2 text-sm font-semibold bg-primary text-on-primary rounded-lg shadow-sm hover:shadow-md transition-all active:scale-95 flex items-center gap-2">
 <span class="material-symbols-outlined text-lg" data-icon="check_circle">check_circle</span>
-                                            Approve
-                                        </button>
+                                        Approve
+                                    </button>
 </div>
 </td>
 </tr>
 <!-- Row 3 -->
-<tr class="group hover:bg-surface-container-low/30 transition-colors">
+<tr class="group hover:bg-surface-container-low transition-colors">
 <td class="px-8 py-6 text-sm font-medium text-on-surface-variant font-body">#VID-003</td>
 <td class="px-8 py-6">
 <div>
@@ -191,17 +188,17 @@
 <div class="flex items-center justify-end gap-3">
 <button class="px-4 py-2 text-sm font-semibold text-secondary hover:bg-surface-container rounded-lg transition-all active:scale-95 flex items-center gap-2">
 <span class="material-symbols-outlined text-lg" data-icon="visibility">visibility</span>
-                                            View
-                                        </button>
+                                        View
+                                    </button>
 <button class="px-5 py-2 text-sm font-semibold bg-primary text-on-primary rounded-lg shadow-sm hover:shadow-md transition-all active:scale-95 flex items-center gap-2">
 <span class="material-symbols-outlined text-lg" data-icon="check_circle">check_circle</span>
-                                            Approve
-                                        </button>
+                                        Approve
+                                    </button>
 </div>
 </td>
 </tr>
 <!-- Row 4 -->
-<tr class="group hover:bg-surface-container-low/30 transition-colors">
+<tr class="group hover:bg-surface-container-low transition-colors">
 <td class="px-8 py-6 text-sm font-medium text-on-surface-variant font-body">#VID-004</td>
 <td class="px-8 py-6">
 <div>
@@ -216,20 +213,18 @@
 <div class="flex items-center justify-end gap-3">
 <button class="px-4 py-2 text-sm font-semibold text-secondary hover:bg-surface-container rounded-lg transition-all active:scale-95 flex items-center gap-2">
 <span class="material-symbols-outlined text-lg" data-icon="visibility">visibility</span>
-                                            View
-                                        </button>
+                                        View
+                                    </button>
 <button class="px-5 py-2 text-sm font-semibold bg-primary text-on-primary rounded-lg shadow-sm hover:shadow-md transition-all active:scale-95 flex items-center gap-2">
 <span class="material-symbols-outlined text-lg" data-icon="check_circle">check_circle</span>
-                                            Approve
-                                        </button>
+                                        Approve
+                                    </button>
 </div>
 </td>
 </tr>
 </tbody>
 </table>
 </div>
-</div>
-<!-- Footer Stats removed as requested -->
 </div>
 </main>
 </body></html>
