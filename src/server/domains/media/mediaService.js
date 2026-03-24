@@ -38,13 +38,14 @@ async function processVideo(url) {
       filePath
     });
   } catch (err) {
-    await mediaRepository.setFailed(videoId, err.message);
+    const errorMessage = String(err?.message || 'Unknown error');
+    await mediaRepository.setFailed(videoId, errorMessage);
 
     // 🔔 notify failed
     ioInstance?.emit('media:status', {
       videoId,
       status: 'failed',
-      error: err.message
+      error: errorMessage
     });
 
     console.error(`Video ${videoId} failed:`, err);
