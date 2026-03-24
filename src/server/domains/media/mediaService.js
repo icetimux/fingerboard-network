@@ -27,9 +27,9 @@ async function processVideo(url) {
       status: 'downloading'
     });
 
-    const filePath = await downloadVideo(url, VIDEO_DIR, videoId);
+    const { filePath, duration } = await downloadVideo(url, VIDEO_DIR, videoId);
 
-    await mediaRepository.setReady(videoId, filePath);
+    await mediaRepository.setReady(videoId, filePath, duration);
 
     // 🔔 notify ready
     ioInstance?.emit('media:status', {

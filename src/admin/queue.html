@@ -247,6 +247,9 @@ async function loadQueue() {
 document.addEventListener('DOMContentLoaded', () => {
   loadPlaybackState();
   loadQueue();
+
+  const socket = io();
+  socket.on('state', (s) => updatePlayPauseBtn(s.playing));
 });
 </script>
 </body></html>

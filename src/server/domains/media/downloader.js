@@ -29,6 +29,9 @@ export async function downloadVideo(url, outputDir, videoId) {
     throw new Error(`Failed to create output directory: ${err.message}`);
   }
 
+  // Pre-flight: fetch duration metadata only (no download)
+  const duration = await fetchDuration(url);
+
   return new Promise((resolve, reject) => {
     let finalPath = null;
     let stderrOutput = '';
@@ -124,12 +127,25 @@ export async function downloadVideo(url, outputDir, videoId) {
             reject(new Error(`Failed to normalize filename: ${renameErr.message}`));
             return;
           }
-          resolve(normalizedPath);
+          resolve({ filePath: normalizedPath, duration });
         }
       } else {
         const errorMsg = stderrOutput || `yt-dlp exited with code ${code}`;
         reject(new Error(`Download failed: ${errorMsg}`));
       }
     });
+  });
+}
+
+function fetchDuration(url) {
+  return new Promise((resolve) => {
+    let output = '';
+    const proc = spawn(YT_DLP, ['--skip-download', '--print', '%(duration)s', url]);
+    proc.stdout.on('data', (d) => { output += d.toString(); });
+    proc.on('close', () => {
+      const secs = parseFloat(output.trim());
+      resolve(Number.isFinite(secs) ? Math.round(secs) : null);
+    });
+    proc.on('error', () => resolve(null));
   });
 }

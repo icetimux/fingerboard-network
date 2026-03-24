@@ -58,6 +58,10 @@ router.post('/approve/:id', basicAuth, async (req, res) => {
   try {
     const id = req.params.id;
     await approve(id);
+    // Auto-start playback if the queue was idle (exhausted, not just paused)
+    if (!playbackState.playing && !playbackState.currentVideoId) {
+      await playbackController.play();
+    }
     res.json({ success: true });
   } catch (error) {
     console.error('Error approving media:', error);

@@ -32,6 +32,7 @@ export const playbackController = {
     const nextVideo = await getNextVideo(state.currentVideoId);
     if (!nextVideo) {
       state.playing = false;
+      state.currentVideoId = null;
       ioInstance.emit('state', await buildEnrichedState());
       return;
     }
