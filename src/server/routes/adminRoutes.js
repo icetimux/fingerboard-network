@@ -24,15 +24,15 @@ router.get('/queue', basicAuth, async (req, res) => {
   res.sendFile(path.join(__dirname, '../../admin/queue.html'));
 });
 
-// Get pending videos
-router.get('/pending', basicAuth, async (req, res) => {
+// Get all media
+router.get('/all', basicAuth, async (req, res) => {
   try {
     const db = await dbPromise;
-    const pending = await db.all("SELECT * FROM media WHERE status='pending'");
-    res.json(pending);
+    const all = await db.all("SELECT * FROM media ORDER BY created_at DESC");
+    res.json(all);
   } catch (error) {
-    console.error('Error fetching pending media:', error);
-    res.status(500).json({ error: 'Failed to fetch pending media' });
+    console.error('Error fetching all media:', error);
+    res.status(500).json({ error: 'Failed to fetch all media' });
   }
 });
 
