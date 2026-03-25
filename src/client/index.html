@@ -412,6 +412,11 @@ function initChat() {
     displayChatMessage('System', msg.text, true);
   });
 
+  // Welcome message — shown after chat history
+  socket.on('chat:welcome', (msg) => {
+    displayChatMessage('System', msg.text, true);
+  });
+
   socket.on('state', handleState);
 
   // Handle Enter key in input
@@ -445,6 +450,9 @@ function displayChatMessage(username, text, isSystem, color) {
   
   const textEl = document.createElement('p');
   textEl.className = 'text-sm text-on-surface/90 leading-relaxed';
+  if (isSystem) {
+    textEl.style.whiteSpace = 'pre-wrap';
+  }
   textEl.textContent = text;
   
   messageDiv.appendChild(usernameEl);

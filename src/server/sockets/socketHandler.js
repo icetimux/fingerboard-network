@@ -37,6 +37,12 @@ export function initSockets(io) {
     const chatHistory = await db.all("SELECT user, text, color, timestamp FROM messages ORDER BY id ASC LIMIT 50");
     socket.emit('chat:history', chatHistory);
 
+    // Send welcome message after history so it appears most recent
+    const welcomeRow = await db.get("SELECT value FROM settings WHERE key='welcome_message'");
+    if (welcomeRow?.value) {
+      socket.emit('chat:welcome', { text: welcomeRow.value });
+    }
+
     // Send user's assigned color
     socket.emit('user:color', { color: userColor });
 
