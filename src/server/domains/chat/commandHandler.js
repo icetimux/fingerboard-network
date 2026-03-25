@@ -7,7 +7,7 @@ export async function handleCommand(parsed, socket, msg) {
     if (!isValidUrl(url)) return socket.emit('chat:system', { text: 'Invalid URL' });
     try {
       mediaService.submitVideo(url);
-      socket.emit('chat:system', { text: `Video submitted for download` });
+      socket.emit('chat:system', { text: `Your video was submitted successfully! ✨🎥` });
     } catch (err) {
       socket.emit('chat:system', { text: `Failed to submit video: ${err.message}` });
     }

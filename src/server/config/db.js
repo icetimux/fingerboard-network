@@ -53,9 +53,10 @@ const dbPromise = open({
   await db.run(`
     INSERT OR IGNORE INTO settings (key, value) VALUES (
       'welcome_message',
-      'Welcome to Fingerboard Network!\nThis is a synchronized video channel. Everyone watches together in real time.\nFeel free to chat below.\nType /submit [YouTube URL] to submit a video!'
+      '✨Welcome to Fingerboard Network!✨\nThis is a synchronized video channel. Everyone watches together in real time.\nFeel free to chat below 💬\nType /submit followed by a YouTube URL to submit a video! 🎥'
     )
   `);
 })();
 
 export default dbPromise;
+

@@ -231,7 +231,10 @@
 <div class="relative">
 <div class="flex flex-col gap-1.5">
 <span class="text-[10px] font-bold uppercase tracking-[0.1em] text-on-surface-variant/50 ml-0.5" id="username-display">ANONYMOUS</span>
-<input class="w-full bg-surface-variant/50 border-none rounded-lg py-3.5 px-4 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:ring-1 focus:ring-primary/30 transition-all" placeholder="Message..." type="text" id="chat-input" />
+<div class="flex items-center w-full bg-surface-variant/50 rounded-lg focus-within:ring-1 focus-within:ring-primary/30 transition-all overflow-hidden" id="chat-input-wrapper">
+  <span id="command-badge" class="hidden shrink-0 ml-2 text-[11px] font-bold px-1.5 py-0.5 rounded bg-primary/20 text-primary border border-primary/30 select-none whitespace-nowrap">/submit</span>
+  <input class="flex-1 min-w-0 bg-transparent border-none py-3.5 px-4 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:ring-0 focus:outline-none" placeholder="Message..." type="text" id="chat-input" />
+</div>
 </div>
 </div>
 </div>
@@ -409,21 +412,57 @@ function initChat() {
 
   // Listen for system messages from server (user-only messages)
   socket.on('chat:system', (msg) => {
-    displayChatMessage('System', msg.text, true);
+    displayChatMessage('FBN', msg.text, true);
   });
 
   // Welcome message — shown after chat history
   socket.on('chat:welcome', (msg) => {
-    displayChatMessage('System', msg.text, true);
+    displayChatMessage('FBN', msg.text, true);
   });
 
   socket.on('state', handleState);
 
   // Handle Enter key in input
   const chatInput = document.getElementById('chat-input');
+  const commandBadge = document.getElementById('command-badge');
+  let activeCommand = null;
+
+  function activateCommand(cmd, arg) {
+    activeCommand = cmd;
+    chatInput.value = arg;
+    chatInput.placeholder = 'YouTube URL';
+    commandBadge.textContent = cmd;
+    commandBadge.classList.remove('hidden');
+  }
+
+  function clearCommand() {
+    activeCommand = null;
+    commandBadge.classList.add('hidden');
+    chatInput.placeholder = 'Message...';
+  }
+
+  chatInput.addEventListener('input', () => {
+    if (activeCommand) return;
+    // Match '/submit' optionally followed by a space and the rest (handles paste too)
+    const match = chatInput.value.match(/^(\/submit)(?:\s(.*))?$/i);
+    if (match) {
+      activateCommand(match[1].toLowerCase(), (match[2] || '').trimStart());
+    }
+  });
+
+  // Backspace on empty input exits command mode
+  chatInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Backspace' && chatInput.value === '' && activeCommand) {
+      clearCommand();
+    }
+  });
+
   chatInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter' && chatInput.value.trim()) {
-      const messageText = chatInput.value.trim();
+    if (e.key === 'Enter' && (chatInput.value.trim() || activeCommand)) {
+      const messageText = activeCommand
+        ? `${activeCommand} ${chatInput.value.trim()}`
+        : chatInput.value.trim();
+      if (!messageText.trim()) return;
       
       // Send to server
       socket.emit('chat:message', {
@@ -434,6 +473,7 @@ function initChat() {
       
       // Clear input
       chatInput.value = '';
+      clearCommand();
     }
   });
 }
