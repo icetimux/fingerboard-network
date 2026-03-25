@@ -152,7 +152,7 @@ Bump Loop
 <th class="px-8 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant font-manrope">Media ID</th>
 <th class="px-8 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant font-manrope">File Path</th>
 <th class="px-8 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant font-manrope">URL</th>
-<th class="px-8 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant font-manrope">Added</th>
+<th class="px-8 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant font-manrope w-36">Added</th>
 </tr>
 </thead>
 <tbody id="queueTable" class="divide-y divide-surface-container">
@@ -162,6 +162,8 @@ Bump Loop
 </div>
 </div>
 </main>
+<br>
+<br>
 <script>
 let isPlaying = false;
 let currentState = null;
@@ -238,7 +240,13 @@ async function skipVideo() {
 
 function formatDate(ts) {
   if (!ts) return '—';
-  return new Date(ts).toLocaleString();
+  const d = new Date(ts);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const hour = String(d.getHours()).padStart(2, '0');
+  const min = String(d.getMinutes()).padStart(2, '0');
+  return `${year}-${month}-${day} ${hour}:${min}`;
 }
 
 function truncate(str, max = 50) {
@@ -280,9 +288,9 @@ async function loadQueue() {
         <td class="px-8 py-6 text-sm font-medium text-on-surface-variant font-body">${item.media_id}</td>
         <td class="px-8 py-6 text-sm font-mono text-on-surface-variant">${item.file_path || '—'}</td>
         <td class="px-8 py-6">
-          <a href="${item.url}" target="_blank" class="text-sm text-primary hover:underline font-medium break-all">${truncate(item.url)}</a>
+          <a href="${item.url}" target="_blank" class="text-sm text-primary hover:underline font-medium break-all">${truncate(item.url, 35)}</a>
         </td>
-        <td class="px-8 py-6 text-sm text-on-surface-variant">${formatDate(item.added_at)}</td>
+        <td class="px-8 py-6 text-sm text-on-surface-variant whitespace-nowrap">${formatDate(item.added_at)}</td>
       `;
       tbody.appendChild(row);
     });
