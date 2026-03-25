@@ -221,9 +221,8 @@ function updatePlayPauseBtn(playing) {
 async function togglePlayPause() {
   try {
     const endpoint = isPlaying ? '/admin/pause' : '/admin/play';
-    const res = await fetch(endpoint, { method: 'POST' });
-    if (!res.ok) return;
-    updatePlayPauseBtn(!isPlaying);
+    await fetch(endpoint, { method: 'POST' });
+    // UI update driven by socket 'state' event, not here
   } catch (err) {
     console.error('Error toggling play/pause:', err);
   }
