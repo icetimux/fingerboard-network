@@ -2,7 +2,7 @@ import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { basicAuth } from '../middleware/basicAuth.js';
-import { playbackController } from '../domains/playback/controller.js';
+import { playbackController, buildEnrichedState } from '../domains/playback/controller.js';
 import { state as playbackState } from '../domains/playback/state.js';
 import { getQueue, getQueueWithMedia } from '../domains/queue/queueService.js';
 import { approve } from '../domains/media/mediaService.js';
@@ -49,8 +49,8 @@ router.get('/queue-data', basicAuth, async (req, res) => {
 });
 
 // Get playback state
-router.get('/playback-state', basicAuth, (req, res) => {
-  res.json(playbackState);
+router.get('/playback-state', basicAuth, async (req, res) => {
+  res.json(await buildEnrichedState());
 });
 
 // Approve video

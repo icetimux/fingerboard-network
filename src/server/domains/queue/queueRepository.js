@@ -20,7 +20,7 @@ export const queueRepository = {
   async getVideoWithMedia(id) {
     const db = await dbPromise;
     return db.get(`
-      SELECT q.*, m.file_path, m.url
+      SELECT q.*, m.file_path, m.url, m.duration
       FROM queue q
       JOIN media m ON m.id = q.media_id
       WHERE q.id = ?

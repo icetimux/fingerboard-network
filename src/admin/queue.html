@@ -134,6 +134,15 @@ Bump Loop
 <span id="liveIndicator" class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-gray-400"></span> Idle</span>
 </div>
 </div>
+<!-- Now Playing -->
+<div id="now-playing-card" class="hidden mb-8 bg-primary/5 border border-primary/20 rounded-xl px-6 py-4 flex items-center justify-between">
+  <div class="flex items-center gap-3">
+    <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+    <span class="text-xs font-bold uppercase tracking-widest text-primary">Now Playing</span>
+    <span id="now-playing-path" class="text-sm font-mono text-on-surface-variant truncate max-w-xs"></span>
+  </div>
+  <span id="now-playing-countdown" class="text-2xl font-bold font-mono text-on-surface tabular-nums">--:--</span>
+</div>
 <!-- Dashboard Content: Data Table -->
 <div class="bg-surface-container-lowest rounded-xl shadow-sm border border-surface-container overflow-hidden">
 <table class="w-full text-left border-collapse">
@@ -155,6 +164,41 @@ Bump Loop
 </main>
 <script>
 let isPlaying = false;
+let currentState = null;
+let countdownInterval = null;
+
+function fmtTime(secs) {
+  if (secs == null || secs < 0) secs = 0;
+  const m = Math.floor(secs / 60);
+  const s = Math.floor(secs % 60);
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
+
+function startCountdown() {
+  if (countdownInterval) clearInterval(countdownInterval);
+  countdownInterval = setInterval(() => {
+    if (!currentState || !currentState.playing || !currentState.duration) return;
+    const elapsed = (Date.now() - currentState.startedAt) / 1000;
+    const remaining = currentState.duration - elapsed;
+    document.getElementById('now-playing-countdown').textContent = fmtTime(remaining);
+  }, 500);
+}
+
+function updateNowPlaying(s) {
+  const card = document.getElementById('now-playing-card');
+  const path = document.getElementById('now-playing-path');
+  const countdown = document.getElementById('now-playing-countdown');
+  if (s.playing && s.filePath) {
+    card.classList.remove('hidden');
+    path.textContent = s.filePath.split('/').pop();
+    const elapsed = (Date.now() - s.startedAt) / 1000;
+    const remaining = (s.duration ?? 0) - elapsed;
+    countdown.textContent = fmtTime(remaining);
+  } else {
+    card.classList.add('hidden');
+    if (countdownInterval) clearInterval(countdownInterval);
+  }
+}
 
 function updatePlayPauseBtn(playing) {
   isPlaying = playing;
@@ -206,7 +250,10 @@ async function loadPlaybackState() {
     const res = await fetch('/admin/playback-state');
     if (!res.ok) return;
     const s = await res.json();
+    currentState = s;
     updatePlayPauseBtn(s.playing);
+    updateNowPlaying(s);
+    if (s.playing) startCountdown();
   } catch (err) {
     console.error('Error loading playback state:', err);
   }
@@ -249,7 +296,12 @@ document.addEventListener('DOMContentLoaded', () => {
   loadQueue();
 
   const socket = io();
-  socket.on('state', (s) => updatePlayPauseBtn(s.playing));
+  socket.on('state', (s) => {
+    currentState = s;
+    updatePlayPauseBtn(s.playing);
+    updateNowPlaying(s);
+    if (s.playing) startCountdown();
+  });
 });
 </script>
 </body></html>

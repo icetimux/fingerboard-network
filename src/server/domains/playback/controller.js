@@ -4,11 +4,13 @@ import { ioInstance } from '../../sockets/socketHandler.js';
 
 export async function buildEnrichedState() {
   let filePath = null;
+  let duration = null;
   if (state.currentVideoId) {
     const vid = await getVideoWithMedia(state.currentVideoId);
     filePath = vid?.file_path ? '/' + vid.file_path : null;
+    duration = vid?.duration ?? null;
   }
-  return { ...state, filePath };
+  return { ...state, filePath, duration };
 }
 
 export const playbackController = {
