@@ -7,6 +7,7 @@ import { state as playbackState } from '../domains/playback/state.js';
 import { getQueue, getQueueWithMedia } from '../domains/queue/queueService.js';
 import { approve } from '../domains/media/mediaService.js';
 import dbPromise from '../config/db.js';
+import { getAllResetTokens } from '../domains/auth/authRepository.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -99,6 +100,21 @@ router.post('/skip', basicAuth, async (req, res) => {
   } catch (error) {
     console.error('Error skipping video:', error);
     res.status(500).json({ error: 'Failed to skip video' });
+  }
+});
+
+// Reset tokens page
+router.get('/reset-tokens', basicAuth, (req, res) => {
+  res.sendFile(path.join(__dirname, '../../admin/reset-tokens.html'));
+});
+
+// Reset tokens data (JSON)
+router.get('/reset-tokens-data', basicAuth, async (req, res) => {
+  try {
+    const tokens = await getAllResetTokens();
+    res.json(tokens);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch reset tokens' });
   }
 });
 

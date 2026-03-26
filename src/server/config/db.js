@@ -59,6 +59,18 @@ const dbPromise = open({
     )
   `);
 
+  await db.run(`
+    CREATE TABLE IF NOT EXISTS reset_tokens (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      token TEXT UNIQUE NOT NULL,
+      expires_at INTEGER NOT NULL,
+      used INTEGER DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+  `);
+
   // Seed default welcome message if not set
   await db.run(`
     INSERT OR IGNORE INTO settings (key, value) VALUES (

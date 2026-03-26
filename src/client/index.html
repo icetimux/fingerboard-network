@@ -297,22 +297,21 @@
 <label class="block text-xs font-bold uppercase tracking-widest text-primary-dim ml-1">Username</label>
 <div class="relative">
 <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant text-xl">person</span>
-<input id="signup-username" class="w-full bg-surface-container-highest border-none rounded-xl py-3.5 pl-12 pr-4 text-on-surface placeholder:text-outline focus:ring-2 focus:ring-primary/30 transition-all" placeholder="cinema_fan_01" type="text" autocomplete="username"/>
+<input id="signup-username" class="w-full bg-surface-container-highest border-none rounded-xl py-3.5 pl-12 pr-4 text-on-surface placeholder:text-on-surface-variant/40 focus:ring-2 focus:ring-primary/30 transition-all" placeholder="your_username" type="text" autocomplete="username"/>
 </div>
 </div>
 <div class="space-y-2">
 <label class="block text-xs font-bold uppercase tracking-widest text-primary-dim ml-1">Email Address</label>
 <div class="relative">
 <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant text-xl">mail</span>
-<input id="signup-email" class="w-full bg-surface-container-highest border-none rounded-xl py-3.5 pl-12 pr-4 text-on-surface placeholder:text-outline focus:ring-2 focus:ring-primary/30 transition-all" placeholder="name@example.com" type="email" autocomplete="email"/>
+<input id="signup-email" class="w-full bg-surface-container-highest border-none rounded-xl py-3.5 pl-12 pr-4 text-on-surface placeholder:text-on-surface-variant/40 focus:ring-2 focus:ring-primary/30 transition-all" placeholder="name@example.com" type="email" autocomplete="email"/>
 </div>
-<p class="text-[11px] text-on-surface-variant/70 ml-1 mt-1 leading-relaxed">🔒 <strong>Keep this private.</strong> Your email is never shown publicly — it's only used to prove it's you if you ever forget your password. Don't use it as a username.</p>
 </div>
 <div class="space-y-2">
 <label class="block text-xs font-bold uppercase tracking-widest text-primary-dim ml-1">Password</label>
 <div class="relative">
 <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant text-xl">lock</span>
-<input id="signup-password" class="w-full bg-surface-container-highest border-none rounded-xl py-3.5 pl-12 pr-4 text-on-surface placeholder:text-outline focus:ring-2 focus:ring-primary/30 transition-all" placeholder="••••••••" type="password" autocomplete="new-password"/>
+<input id="signup-password" class="w-full bg-surface-container-highest border-none rounded-xl py-3.5 pl-12 pr-4 text-on-surface placeholder:text-on-surface-variant/40 focus:ring-2 focus:ring-primary/30 transition-all" placeholder="••••••••" type="password" autocomplete="new-password"/>
 </div>
 </div>
 <p id="signup-error" class="hidden text-sm text-error ml-1"></p>
@@ -331,7 +330,9 @@ Create Account<span class="material-symbols-outlined text-xl">arrow_forward</spa
 </button>
 <h2 class="text-xl font-bold text-on-surface tracking-tight">Reset Password</h2>
 </div>
-<p class="text-on-surface-variant text-sm">Enter your username, the email you signed up with, and your new password.</p>
+<!-- Step 1: request token -->
+<div id="forgot-step1">
+<p class="text-on-surface-variant text-sm mb-4">Enter your username and the email address on your account. We'll send a reset token to that email.</p>
 <form class="space-y-4" id="form-forgot">
 <div class="space-y-2">
 <label class="block text-xs font-bold uppercase tracking-widest text-on-surface-variant ml-1">Username</label>
@@ -347,17 +348,34 @@ Create Account<span class="material-symbols-outlined text-xl">arrow_forward</spa
 <input id="forgot-email" class="w-full bg-surface-container-highest border-none rounded-xl py-4 pl-12 pr-4 text-on-surface placeholder:text-on-surface-variant/40 focus:ring-2 focus:ring-primary/20 transition-all" placeholder="name@example.com" type="email"/>
 </div>
 </div>
+<p id="forgot-error" class="hidden text-sm text-error ml-1"></p>
+<p id="forgot-success" class="hidden text-sm text-secondary ml-1"></p>
+<button class="w-full bg-gradient-to-br from-primary to-primary-container text-on-primary font-bold py-4 rounded-full active:scale-95 transition-all" type="submit">Send Reset Email</button>
+</form>
+</div>
+<!-- Step 2: enter token + new password (revealed after step 1 success) -->
+<div id="forgot-step2" class="hidden space-y-4 border-t border-white/10 pt-6">
+<p class="text-on-surface-variant text-sm">Check your email for the reset token and enter it below.</p>
+<form class="space-y-4" id="form-reset">
+<div class="space-y-2">
+<label class="block text-xs font-bold uppercase tracking-widest text-on-surface-variant ml-1">Reset Token</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant text-xl">key</span>
+<input id="reset-token" class="w-full bg-surface-container-highest border-none rounded-xl py-4 pl-12 pr-4 text-on-surface placeholder:text-on-surface-variant/40 focus:ring-2 focus:ring-primary/20 transition-all font-mono text-sm" placeholder="Paste token from email" type="text"/>
+</div>
+</div>
 <div class="space-y-2">
 <label class="block text-xs font-bold uppercase tracking-widest text-on-surface-variant ml-1">New Password</label>
 <div class="relative">
 <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant text-xl">lock</span>
-<input id="forgot-newpassword" class="w-full bg-surface-container-highest border-none rounded-xl py-4 pl-12 pr-4 text-on-surface placeholder:text-on-surface-variant/40 focus:ring-2 focus:ring-primary/20 transition-all" placeholder="••••••••" type="password" autocomplete="new-password"/>
+<input id="reset-newpassword" class="w-full bg-surface-container-highest border-none rounded-xl py-4 pl-12 pr-4 text-on-surface placeholder:text-on-surface-variant/40 focus:ring-2 focus:ring-primary/20 transition-all" placeholder="••••••••" type="password" autocomplete="new-password"/>
 </div>
 </div>
-<p id="forgot-error" class="hidden text-sm text-error ml-1"></p>
-<p id="forgot-success" class="hidden text-sm text-secondary ml-1"></p>
+<p id="reset-error" class="hidden text-sm text-error ml-1"></p>
+<p id="reset-success" class="hidden text-sm text-secondary ml-1"></p>
 <button class="w-full bg-gradient-to-br from-primary to-primary-container text-on-primary font-bold py-4 rounded-full active:scale-95 transition-all" type="submit">Reset Password</button>
 </form>
+</div>
 </div>
 
 <!-- ===== VIEW: PROFILE ===== -->
@@ -707,6 +725,16 @@ function showModalView(view) {
   ['auth', 'forgot', 'profile'].forEach(v => {
     document.getElementById('modal-view-' + v).classList.toggle('hidden', v !== view);
   });
+  if (view === 'forgot') {
+    document.getElementById('form-forgot').reset();
+    document.getElementById('form-reset').reset();
+    document.getElementById('forgot-step2').classList.add('hidden');
+    document.getElementById('forgot-error').classList.add('hidden');
+    document.getElementById('forgot-success').classList.add('hidden');
+    document.getElementById('reset-error').classList.add('hidden');
+    document.getElementById('reset-success').classList.add('hidden');
+    document.getElementById('form-reset').querySelectorAll('input, button').forEach(el => el.disabled = false);
+  }
 }
 
 function openProfileModal() {
@@ -788,21 +816,43 @@ async function doLogout() {
   window.location.reload();
 }
 
-async function doResetPasswordDirect(username, email, newPassword) {
+async function doForgotPassword(username, email) {
   const errorEl = document.getElementById('forgot-error');
   const successEl = document.getElementById('forgot-success');
   errorEl.classList.add('hidden'); successEl.classList.add('hidden');
   try {
+    const res = await fetch('/auth/forgot-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, email }),
+    });
+    const data = await res.json();
+    if (!res.ok) { errorEl.textContent = data.error; errorEl.classList.remove('hidden'); return; }
+    successEl.textContent = 'Email sent! Check your inbox for the reset token.';
+    successEl.classList.remove('hidden');
+    document.getElementById('forgot-step2').classList.remove('hidden');
+  } catch (e) {
+    errorEl.textContent = 'Connection error. Please try again.';
+    errorEl.classList.remove('hidden');
+  }
+}
+
+async function doResetPassword(token, newPassword) {
+  const errorEl = document.getElementById('reset-error');
+  const successEl = document.getElementById('reset-success');
+  errorEl.classList.add('hidden'); successEl.classList.add('hidden');
+  const username = document.getElementById('forgot-username').value.trim();
+  try {
     const res = await fetch('/auth/reset-password', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, email, newPassword }),
+      body: JSON.stringify({ username, token, newPassword }),
     });
     const data = await res.json();
     if (!res.ok) { errorEl.textContent = data.error; errorEl.classList.remove('hidden'); return; }
     successEl.textContent = 'Password reset! You can now log in.';
     successEl.classList.remove('hidden');
-    document.getElementById('form-forgot').reset();
+    document.getElementById('form-reset').querySelectorAll('input, button').forEach(el => el.disabled = true);
   } catch (e) {
     errorEl.textContent = 'Connection error. Please try again.';
     errorEl.classList.remove('hidden');
@@ -856,10 +906,17 @@ window.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('form-forgot').addEventListener('submit', async (e) => {
     e.preventDefault();
-    await doResetPasswordDirect(
+    await doForgotPassword(
       document.getElementById('forgot-username').value.trim(),
-      document.getElementById('forgot-email').value.trim(),
-      document.getElementById('forgot-newpassword').value
+      document.getElementById('forgot-email').value.trim()
+    );
+  });
+
+  document.getElementById('form-reset').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    await doResetPassword(
+      document.getElementById('reset-token').value.trim(),
+      document.getElementById('reset-newpassword').value
     );
   });
 

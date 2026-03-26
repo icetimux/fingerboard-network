@@ -2,7 +2,8 @@ import express from 'express';
 import {
   register,
   login,
-  resetPasswordDirect,
+  requestPasswordReset,
+  resetPassword,
   changePassword,
 } from '../domains/auth/authService.js';
 
@@ -52,10 +53,20 @@ router.post('/logout', (req, res) => {
   });
 });
 
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { username, email } = req.body;
+    await requestPasswordReset(username, email);
+    res.json({ success: true });
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+});
+
 router.post('/reset-password', async (req, res) => {
   try {
-    const { username, email, newPassword } = req.body;
-    await resetPasswordDirect(username, email, newPassword);
+    const { username, token, newPassword } = req.body;
+    await resetPassword(username, token, newPassword);
     res.json({ success: true });
   } catch (e) {
     res.status(400).json({ error: e.message });

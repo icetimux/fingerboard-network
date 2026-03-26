@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import dbPromise from '../../config/db.js';
 
 export async function findUserByUsername(username) {
@@ -27,4 +28,37 @@ export async function createUser(username, email, passwordHash) {
 export async function updatePassword(userId, passwordHash) {
   const db = await dbPromise;
   await db.run('UPDATE users SET password_hash = ? WHERE id = ?', [passwordHash, userId]);
+}
+
+export async function createResetToken(userId) {
+  const db = await dbPromise;
+  const token = crypto.randomBytes(24).toString('hex');
+  const expiresAt = Date.now() + 60 * 60 * 1000; // 1 hour
+  await db.run('DELETE FROM reset_tokens WHERE user_id = ?', [userId]);
+  await db.run(
+    'INSERT INTO reset_tokens (user_id, token, expires_at) VALUES (?, ?, ?)',
+    [userId, token, expiresAt]
+  );
+  return token;
+}
+
+export async function findResetToken(token) {
+  const db = await dbPromise;
+  return db.get('SELECT * FROM reset_tokens WHERE token = ? AND used = 0', [token]);
+}
+
+export async function consumeResetToken(tokenId) {
+  const db = await dbPromise;
+  await db.run('UPDATE reset_tokens SET used = 1 WHERE id = ?', [tokenId]);
+}
+
+export async function getAllResetTokens() {
+  const db = await dbPromise;
+  return db.all(
+    `SELECT rt.id, rt.token, rt.expires_at, rt.used, rt.created_at, u.username
+     FROM reset_tokens rt
+     JOIN users u ON u.id = rt.user_id
+     ORDER BY rt.id DESC
+     LIMIT 100`,
+  );
 }
