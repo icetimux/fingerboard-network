@@ -201,10 +201,15 @@ async function loadSubmissions() {
               <span class="material-symbols-outlined text-lg" data-icon="visibility">visibility</span>
               View
             </a>
-            <button onclick="approveVideo(${video.id})" class="px-5 py-2 text-sm font-semibold bg-primary text-on-primary rounded-lg shadow-sm hover:shadow-md transition-all active:scale-95 flex items-center gap-2">
+            ${video.status === 'approved'
+              ? `<button disabled class="px-5 py-2 text-sm font-semibold bg-surface-container text-on-surface-variant rounded-lg flex items-center gap-2 cursor-not-allowed opacity-50">
+              <span class="material-symbols-outlined text-lg">check_circle</span>
+              Approved
+            </button>`
+              : `<button onclick="approveVideo(${video.id})" class="px-5 py-2 text-sm font-semibold bg-primary text-on-primary rounded-lg shadow-sm hover:shadow-md transition-all active:scale-95 flex items-center gap-2">
               <span class="material-symbols-outlined text-lg" data-icon="check_circle">check_circle</span>
               Approve
-            </button>
+            </button>`}
           </div>
         </td>
       `;
