@@ -168,31 +168,32 @@
 </div>
 <!-- <span class="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-red-400"><span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span> Live</span> -->
 </div>
-<!-- <button class="w-8 h-8 rounded-full bg-surface-variant flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors" onclick="document.getElementById('auth-modal').classList.remove('hidden')">
+<!-- Not logged in: show account icon -->
+<button id="auth-btn" class="w-8 h-8 rounded-full bg-surface-variant flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors" onclick="openAuthModal('login')">
 <span class="material-symbols-outlined text-xl">account_circle</span>
-</button> -->
+</button>
+<!-- Logged in: show username + dropdown -->
+<div id="user-menu" class="hidden relative">
+<button onclick="toggleUserDropdown()" class="flex items-center gap-2 pl-3 pr-2 py-1.5 rounded-full bg-surface-variant hover:bg-surface-container-highest transition-colors">
+<span id="header-username" class="text-sm font-semibold text-on-surface"></span>
+<span class="material-symbols-outlined text-xl text-on-surface-variant">account_circle</span>
+</button>
+<div id="user-dropdown" class="hidden absolute right-0 top-full mt-2 w-44 bg-surface-container-low rounded-xl border border-white/10 shadow-2xl overflow-hidden z-50">
+<button onclick="openProfileModal()" class="w-full flex items-center gap-3 px-4 py-3 text-sm text-on-surface hover:bg-white/5 text-left">
+<span class="material-symbols-outlined text-base">manage_accounts</span>Profile
+</button>
+<div class="border-t border-white/5"></div>
+<button onclick="doLogout()" class="w-full flex items-center gap-3 px-4 py-3 text-sm text-error hover:bg-white/5 text-left">
+<span class="material-symbols-outlined text-base">logout</span>Logout
+</button>
+</div>
+</div>
 </header>
 <div class="flex flex-grow overflow-hidden relative">
 <!-- Main Immersive Video Pane -->
 <main class="flex-grow flex flex-col h-full bg-black relative justify-center group mr-80" id="main-content">
 <div class="relative group flex items-center justify-center w-full overflow-hidden aspect-video">
 <!-- Video Content -->
-    <!-- <iframe
-      class="w-full h-full"
-      src="https://www.youtube.com/embed/b2_f6qW0zM8?start=20&autoplay=1&mute=1&controls=1&rel=0&modestbranding=1"
-      title="YouTube video player"
-      frameborder="0"
-      allow="autoplay; encrypted-media; picture-in-picture"
-      allowfullscreen>
-    </iframe> -->
-    <!-- <iframe
-  class="w-full h-full"
-  src="https://www.youtube.com/embed/b2_f6qW0zM8?enablejsapi=1&start=20&autoplay=1&mute=1&controls=0&rel=0&modestbranding=1&playsinline=1"
-  title="YouTube video player"
-  frameborder="0"
-  allow="autoplay; encrypted-media; picture-in-picture"
-  allowfullscreen>
-</iframe> -->
 <video id="player" class="w-full h-full object-contain" playsinline muted></video>
 <!-- Minimal Overlay Controls -->
 </div>
@@ -240,82 +241,153 @@
 </div>
 </aside>
 </div>
-<!-- Auth Modal -->
+<!-- Auth / Profile Modal -->
 <div class="hidden fixed inset-0 z-[100] flex items-center justify-center" id="auth-modal">
 <!-- Backdrop -->
-<div class="absolute inset-0 bg-black/60 backdrop-blur-md" onclick="document.getElementById('auth-modal').classList.add('hidden')"></div>
-<!-- Modal Content -->
-<div class="relative w-full max-w-[420px] bg-surface-container-low rounded-xl shadow-2xl border border-white/5 p-8 mx-4">
+<div class="absolute inset-0 bg-black/60 backdrop-blur-md" onclick="closeAuthModal()"></div>
+<!-- Modal Panel -->
+<div class="relative w-full max-w-[420px] bg-surface-container-low rounded-xl shadow-2xl border border-white/5 p-8 mx-4 max-h-[90vh] overflow-y-auto">
 <!-- Close Button -->
-<button class="absolute top-4 right-4 text-on-surface-variant hover:text-on-surface transition-colors" onclick="document.getElementById('auth-modal').classList.add('hidden')">
+<button class="absolute top-4 right-4 text-on-surface-variant hover:text-on-surface transition-colors" onclick="closeAuthModal()">
 <span class="material-symbols-outlined">close</span>
 </button>
-<!-- Tabs -->
+
+<!-- ===== VIEW: AUTH (Login / Signup) ===== -->
+<div id="modal-view-auth">
 <div class="flex gap-4 mb-8 border-b border-white/5">
 <button class="pb-3 text-sm font-bold uppercase tracking-widest text-primary border-b-2 border-primary transition-all" id="tab-login" onclick="switchTab('login')">Login</button>
 <button class="pb-3 text-sm font-bold uppercase tracking-widest text-on-surface-variant hover:text-on-surface border-b-2 border-transparent transition-all" id="tab-signup" onclick="switchTab('signup')">Sign Up</button>
 </div>
-<!-- Login Content -->
+<!-- Login -->
 <div class="tab-content space-y-6" id="content-login">
 <header>
 <h2 class="text-xl font-bold text-on-surface tracking-tight">Welcome Back</h2>
 <p class="text-on-surface-variant text-sm mt-1">Sign in to join the lobby.</p>
 </header>
-<form class="space-y-6" onsubmit="event.preventDefault();">
+<form class="space-y-5" id="form-login">
 <div class="space-y-2">
-<label class="block text-xs font-bold uppercase tracking-widest text-on-surface-variant ml-1">Email or Username</label>
+<label class="block text-xs font-bold uppercase tracking-widest text-on-surface-variant ml-1">Username</label>
 <div class="relative">
 <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant text-xl">person</span>
-<input class="w-full bg-surface-container-highest border-none rounded-xl py-4 pl-12 pr-4 text-on-surface placeholder:text-on-surface-variant/40 focus:ring-2 focus:ring-primary/20 transition-all" placeholder="name@email.com" type="text"/>
+<input id="login-username" class="w-full bg-surface-container-highest border-none rounded-xl py-4 pl-12 pr-4 text-on-surface placeholder:text-on-surface-variant/40 focus:ring-2 focus:ring-primary/20 transition-all" placeholder="your_username" type="text" autocomplete="username"/>
 </div>
 </div>
 <div class="space-y-2">
 <div class="flex justify-between items-center ml-1">
 <label class="block text-xs font-bold uppercase tracking-widest text-on-surface-variant">Password</label>
-<a class="text-[10px] font-bold uppercase tracking-tighter text-primary-dim hover:text-primary transition-colors" href="#">Forgot?</a>
+<button type="button" class="text-[10px] font-bold uppercase tracking-tighter text-primary-dim hover:text-primary transition-colors" onclick="showModalView('forgot')">Forgot?</button>
 </div>
 <div class="relative">
 <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant text-xl">lock</span>
-<input class="w-full bg-surface-container-highest border-none rounded-xl py-4 pl-12 pr-4 text-on-surface placeholder:text-on-surface-variant/40 focus:ring-2 focus:ring-primary/20 transition-all" placeholder="••••••••" type="password"/>
+<input id="login-password" class="w-full bg-surface-container-highest border-none rounded-xl py-4 pl-12 pr-4 text-on-surface placeholder:text-on-surface-variant/40 focus:ring-2 focus:ring-primary/20 transition-all" placeholder="••••••••" type="password" autocomplete="current-password"/>
 </div>
 </div>
+<p id="login-error" class="hidden text-sm text-error ml-1"></p>
 <button class="w-full bg-gradient-to-br from-primary to-primary-container text-on-primary font-bold py-4 rounded-full shadow-lg shadow-primary/10 hover:shadow-primary/20 active:scale-95 transition-all duration-150" type="submit">Sign In</button>
 </form>
 </div>
-<!-- Signup Content -->
+<!-- Signup -->
 <div class="tab-content hidden space-y-6" id="content-signup">
 <header>
 <h2 class="text-xl font-bold text-on-surface tracking-tight">Create Account</h2>
 <p class="text-on-surface-variant text-sm mt-1">Join the community and start watching.</p>
 </header>
-<form class="space-y-6" onsubmit="event.preventDefault();">
+<form class="space-y-5" id="form-signup">
 <div class="space-y-2">
 <label class="block text-xs font-bold uppercase tracking-widest text-primary-dim ml-1">Username</label>
 <div class="relative">
 <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant text-xl">person</span>
-<input class="w-full bg-surface-container-highest border-none rounded-xl py-3.5 pl-12 pr-4 text-on-surface placeholder:text-outline focus:ring-2 focus:ring-primary/30 transition-all" placeholder="cinema_fan_01" type="text"/>
+<input id="signup-username" class="w-full bg-surface-container-highest border-none rounded-xl py-3.5 pl-12 pr-4 text-on-surface placeholder:text-outline focus:ring-2 focus:ring-primary/30 transition-all" placeholder="cinema_fan_01" type="text" autocomplete="username"/>
 </div>
 </div>
 <div class="space-y-2">
 <label class="block text-xs font-bold uppercase tracking-widest text-primary-dim ml-1">Email Address</label>
 <div class="relative">
 <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant text-xl">mail</span>
-<input class="w-full bg-surface-container-highest border-none rounded-xl py-3.5 pl-12 pr-4 text-on-surface placeholder:text-outline focus:ring-2 focus:ring-primary/30 transition-all" placeholder="name@example.com" type="email"/>
+<input id="signup-email" class="w-full bg-surface-container-highest border-none rounded-xl py-3.5 pl-12 pr-4 text-on-surface placeholder:text-outline focus:ring-2 focus:ring-primary/30 transition-all" placeholder="name@example.com" type="email" autocomplete="email"/>
 </div>
+<p class="text-[11px] text-on-surface-variant/70 ml-1 mt-1 leading-relaxed">🔒 <strong>Keep this private.</strong> Your email is never shown publicly — it's only used to prove it's you if you ever forget your password. Don't use it as a username.</p>
 </div>
 <div class="space-y-2">
 <label class="block text-xs font-bold uppercase tracking-widest text-primary-dim ml-1">Password</label>
 <div class="relative">
 <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant text-xl">lock</span>
-<input class="w-full bg-surface-container-highest border-none rounded-xl py-3.5 pl-12 pr-4 text-on-surface placeholder:text-outline focus:ring-2 focus:ring-primary/30 transition-all" placeholder="••••••••" type="password"/>
+<input id="signup-password" class="w-full bg-surface-container-highest border-none rounded-xl py-3.5 pl-12 pr-4 text-on-surface placeholder:text-outline focus:ring-2 focus:ring-primary/30 transition-all" placeholder="••••••••" type="password" autocomplete="new-password"/>
 </div>
 </div>
+<p id="signup-error" class="hidden text-sm text-error ml-1"></p>
 <button class="w-full bg-gradient-to-br from-primary to-primary-container text-on-primary-container font-bold py-4 rounded-full shadow-lg shadow-primary/20 hover:shadow-primary/30 active:scale-95 transition-all duration-150 flex items-center justify-center gap-2" type="submit">
-                    Create Account
-                    <span class="material-symbols-outlined text-xl">arrow_forward</span>
+Create Account<span class="material-symbols-outlined text-xl">arrow_forward</span>
 </button>
 </form>
 </div>
+</div>
+
+<!-- ===== VIEW: FORGOT PASSWORD ===== -->
+<div id="modal-view-forgot" class="hidden space-y-6">
+<div class="flex items-center gap-3 mb-2">
+<button onclick="showModalView('auth')" class="text-on-surface-variant hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<h2 class="text-xl font-bold text-on-surface tracking-tight">Reset Password</h2>
+</div>
+<p class="text-on-surface-variant text-sm">Enter your username, the email you signed up with, and your new password.</p>
+<form class="space-y-4" id="form-forgot">
+<div class="space-y-2">
+<label class="block text-xs font-bold uppercase tracking-widest text-on-surface-variant ml-1">Username</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant text-xl">person</span>
+<input id="forgot-username" class="w-full bg-surface-container-highest border-none rounded-xl py-4 pl-12 pr-4 text-on-surface placeholder:text-on-surface-variant/40 focus:ring-2 focus:ring-primary/20 transition-all" placeholder="your_username" type="text"/>
+</div>
+</div>
+<div class="space-y-2">
+<label class="block text-xs font-bold uppercase tracking-widest text-on-surface-variant ml-1">Email Address</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant text-xl">mail</span>
+<input id="forgot-email" class="w-full bg-surface-container-highest border-none rounded-xl py-4 pl-12 pr-4 text-on-surface placeholder:text-on-surface-variant/40 focus:ring-2 focus:ring-primary/20 transition-all" placeholder="name@example.com" type="email"/>
+</div>
+</div>
+<div class="space-y-2">
+<label class="block text-xs font-bold uppercase tracking-widest text-on-surface-variant ml-1">New Password</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant text-xl">lock</span>
+<input id="forgot-newpassword" class="w-full bg-surface-container-highest border-none rounded-xl py-4 pl-12 pr-4 text-on-surface placeholder:text-on-surface-variant/40 focus:ring-2 focus:ring-primary/20 transition-all" placeholder="••••••••" type="password" autocomplete="new-password"/>
+</div>
+</div>
+<p id="forgot-error" class="hidden text-sm text-error ml-1"></p>
+<p id="forgot-success" class="hidden text-sm text-secondary ml-1"></p>
+<button class="w-full bg-gradient-to-br from-primary to-primary-container text-on-primary font-bold py-4 rounded-full active:scale-95 transition-all" type="submit">Reset Password</button>
+</form>
+</div>
+
+<!-- ===== VIEW: PROFILE ===== -->
+<div id="modal-view-profile" class="hidden space-y-6">
+<header>
+<h2 class="text-xl font-bold text-on-surface tracking-tight">Profile</h2>
+<p id="profile-username-display" class="text-primary font-bold text-lg mt-1"></p>
+</header>
+<div class="border-t border-white/10 pt-6 space-y-4">
+<h3 class="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Change Password</h3>
+<form class="space-y-4" id="form-changepass">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant text-xl">lock</span>
+<input id="profile-current-password" class="w-full bg-surface-container-highest border-none rounded-xl py-4 pl-12 pr-4 text-on-surface placeholder:text-on-surface-variant/40 focus:ring-2 focus:ring-primary/20 transition-all" placeholder="Current password" type="password" autocomplete="current-password"/>
+</div>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant text-xl">lock_open</span>
+<input id="profile-new-password" class="w-full bg-surface-container-highest border-none rounded-xl py-4 pl-12 pr-4 text-on-surface placeholder:text-on-surface-variant/40 focus:ring-2 focus:ring-primary/20 transition-all" placeholder="New password" type="password" autocomplete="new-password"/>
+</div>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant text-xl">lock_open</span>
+<input id="profile-confirm-password" class="w-full bg-surface-container-highest border-none rounded-xl py-4 pl-12 pr-4 text-on-surface placeholder:text-on-surface-variant/40 focus:ring-2 focus:ring-primary/20 transition-all" placeholder="Confirm new password" type="password" autocomplete="new-password"/>
+</div>
+<p id="profile-error" class="hidden text-sm text-error ml-1"></p>
+<p id="profile-success" class="hidden text-sm text-secondary ml-1"></p>
+<button class="w-full bg-gradient-to-br from-primary to-primary-container text-on-primary font-bold py-4 rounded-full active:scale-95 transition-all" type="submit">Update Password</button>
+</form>
+</div>
+</div>
+
 </div>
 </div>
 <script>    
@@ -366,7 +438,7 @@
 <script>
 // ========== CHAT FUNCTIONALITY ==========
 let socket;
-let userUsername;
+let userUsername = null;
 let userColor;
 
 // Color palette for usernames
@@ -379,15 +451,20 @@ const colorPalette = [
   'text-error'
 ];
 
-function initChat() {
+async function initChat() {
+  // Resolve auth state before connecting socket so username is ready
+  await initAuth();
   socket = io();
 
   // On connection, get assigned color
   socket.on('user:color', (data) => {
     userColor = data.color;
-    userUsername = `Anonymous ${socket.id.substring(0, 5)}`;
+    // Don't overwrite username if already set from auth check
+    if (!userUsername) {
+      userUsername = `Anonymous ${socket.id.substring(0, 5)}`;
+    }
     
-    // Update username display with assigned color
+    // Update username display in chat sidebar
     const usernameDisplay = document.getElementById('username-display');
     usernameDisplay.textContent = userUsername.toUpperCase();
     usernameDisplay.className = `text-[10px] font-bold uppercase tracking-[0.1em] ${userColor} ml-0.5`;
@@ -579,6 +656,221 @@ window.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
+});
+</script>
+
+<script>
+// ========== AUTH ==========
+let currentUser = null;
+
+async function initAuth() {
+  try {
+    const res = await fetch('/auth/me');
+    const data = await res.json();
+    if (data) setLoggedIn(data);
+  } catch (e) {
+    // stay anonymous
+  }
+}
+
+function setLoggedIn(user) {
+  currentUser = user;
+  userUsername = user.username;
+  document.getElementById('auth-btn').classList.add('hidden');
+  document.getElementById('user-menu').classList.remove('hidden');
+  document.getElementById('header-username').textContent = user.username;
+  const usernameDisplay = document.getElementById('username-display');
+  if (usernameDisplay) {
+    usernameDisplay.textContent = user.username.toUpperCase();
+  }
+}
+
+function setLoggedOut() {
+  currentUser = null;
+  userUsername = null;
+  document.getElementById('auth-btn').classList.remove('hidden');
+  document.getElementById('user-menu').classList.add('hidden');
+  document.getElementById('header-username').textContent = '';
+}
+
+function openAuthModal(tab) {
+  showModalView('auth');
+  switchTab(tab || 'login');
+  document.getElementById('auth-modal').classList.remove('hidden');
+}
+
+function closeAuthModal() {
+  document.getElementById('auth-modal').classList.add('hidden');
+}
+
+function showModalView(view) {
+  ['auth', 'forgot', 'profile'].forEach(v => {
+    document.getElementById('modal-view-' + v).classList.toggle('hidden', v !== view);
+  });
+}
+
+function openProfileModal() {
+  document.getElementById('user-dropdown').classList.add('hidden');
+  document.getElementById('profile-username-display').textContent = currentUser.username;
+  // Clear previous state
+  document.getElementById('form-changepass').reset();
+  document.getElementById('profile-error').classList.add('hidden');
+  document.getElementById('profile-success').classList.add('hidden');
+  showModalView('profile');
+  document.getElementById('auth-modal').classList.remove('hidden');
+}
+
+function toggleUserDropdown() {
+  document.getElementById('user-dropdown').classList.toggle('hidden');
+}
+
+// Close dropdown on outside click
+document.addEventListener('click', (e) => {
+  const dropdown = document.getElementById('user-dropdown');
+  const userMenu = document.getElementById('user-menu');
+  if (dropdown && !dropdown.classList.contains('hidden') && userMenu && !userMenu.contains(e.target)) {
+    dropdown.classList.add('hidden');
+  }
+});
+
+async function doLogin(username, password) {
+  const errorEl = document.getElementById('login-error');
+  errorEl.classList.add('hidden');
+  try {
+    const res = await fetch('/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+    });
+    const data = await res.json();
+    if (!res.ok) { errorEl.textContent = data.error; errorEl.classList.remove('hidden'); return; }
+    setLoggedIn(data);
+    closeAuthModal();
+    if (typeof socket !== 'undefined' && socket) socket.emit('user:authed');
+    // Refresh username display with current color
+    if (userColor) {
+      const el = document.getElementById('username-display');
+      if (el) { el.textContent = data.username.toUpperCase(); el.className = `text-[10px] font-bold uppercase tracking-[0.1em] ${userColor} ml-0.5`; }
+    }
+  } catch (e) {
+    errorEl.textContent = 'Connection error. Please try again.';
+    errorEl.classList.remove('hidden');
+  }
+}
+
+async function doRegister(username, email, password) {
+  const errorEl = document.getElementById('signup-error');
+  errorEl.classList.add('hidden');
+  try {
+    const res = await fetch('/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, email, password }),
+    });
+    const data = await res.json();
+    if (!res.ok) { errorEl.textContent = data.error; errorEl.classList.remove('hidden'); return; }
+    setLoggedIn(data);
+    closeAuthModal();
+    if (typeof socket !== 'undefined' && socket) socket.emit('user:authed');
+    if (userColor) {
+      const el = document.getElementById('username-display');
+      if (el) { el.textContent = data.username.toUpperCase(); el.className = `text-[10px] font-bold uppercase tracking-[0.1em] ${userColor} ml-0.5`; }
+    }
+  } catch (e) {
+    errorEl.textContent = 'Connection error. Please try again.';
+    errorEl.classList.remove('hidden');
+  }
+}
+
+async function doLogout() {
+  document.getElementById('user-dropdown').classList.add('hidden');
+  await fetch('/auth/logout', { method: 'POST' });
+  window.location.reload();
+}
+
+async function doResetPasswordDirect(username, email, newPassword) {
+  const errorEl = document.getElementById('forgot-error');
+  const successEl = document.getElementById('forgot-success');
+  errorEl.classList.add('hidden'); successEl.classList.add('hidden');
+  try {
+    const res = await fetch('/auth/reset-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, email, newPassword }),
+    });
+    const data = await res.json();
+    if (!res.ok) { errorEl.textContent = data.error; errorEl.classList.remove('hidden'); return; }
+    successEl.textContent = 'Password reset! You can now log in.';
+    successEl.classList.remove('hidden');
+    document.getElementById('form-forgot').reset();
+  } catch (e) {
+    errorEl.textContent = 'Connection error. Please try again.';
+    errorEl.classList.remove('hidden');
+  }
+}
+
+async function doChangePassword(currentPassword, newPassword, confirmPassword) {
+  const errorEl = document.getElementById('profile-error');
+  const successEl = document.getElementById('profile-success');
+  errorEl.classList.add('hidden'); successEl.classList.add('hidden');
+  if (newPassword !== confirmPassword) {
+    errorEl.textContent = 'New passwords do not match.';
+    errorEl.classList.remove('hidden');
+    return;
+  }
+  try {
+    const res = await fetch('/auth/change-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ currentPassword, newPassword }),
+    });
+    const data = await res.json();
+    if (!res.ok) { errorEl.textContent = data.error; errorEl.classList.remove('hidden'); return; }
+    successEl.textContent = 'Password updated successfully.';
+    successEl.classList.remove('hidden');
+    document.getElementById('form-changepass').reset();
+  } catch (e) {
+    errorEl.textContent = 'Connection error. Please try again.';
+    errorEl.classList.remove('hidden');
+  }
+}
+
+// Form event listeners
+window.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('form-login').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    await doLogin(
+      document.getElementById('login-username').value.trim(),
+      document.getElementById('login-password').value
+    );
+  });
+
+  document.getElementById('form-signup').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    await doRegister(
+      document.getElementById('signup-username').value.trim(),
+      document.getElementById('signup-email').value.trim(),
+      document.getElementById('signup-password').value
+    );
+  });
+
+  document.getElementById('form-forgot').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    await doResetPasswordDirect(
+      document.getElementById('forgot-username').value.trim(),
+      document.getElementById('forgot-email').value.trim(),
+      document.getElementById('forgot-newpassword').value
+    );
+  });
+
+  document.getElementById('form-changepass').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    await doChangePassword(
+      document.getElementById('profile-current-password').value,
+      document.getElementById('profile-new-password').value,
+      document.getElementById('profile-confirm-password').value
+    );
+  });
 });
 </script>
 </body></html>

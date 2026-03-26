@@ -24,6 +24,10 @@ export function initSockets(io) {
   io.on('connection', async (socket) => {
     console.log('Client connected');
 
+    // Resolve authenticated username from session (if logged in)
+    const sess = socket.request.session;
+    socket.authedUsername = sess?.userId ? sess.username : null;
+
     // Assign user a color
     const userColor = getRandomColor();
     socket.userColor = userColor;
@@ -45,6 +49,15 @@ export function initSockets(io) {
 
     // Send user's assigned color
     socket.emit('user:color', { color: userColor });
+
+    // Client emits this after logging in mid-session so we re-read the session
+    socket.on('user:authed', () => {
+      socket.request.session.reload((err) => {
+        if (!err && socket.request.session?.userId) {
+          socket.authedUsername = socket.request.session.username;
+        }
+      });
+    });
 
     socket.on('chat:message', msg => handleChat(msg, socket));
   });
