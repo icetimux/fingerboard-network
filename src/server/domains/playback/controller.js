@@ -44,7 +44,7 @@ export const playbackController = {
   async next() {
     let nextVideo = await getNextVideo(state.currentVideoId);
     if (!nextVideo) {
-      // Queue exhausted — try to loop a random approved bump
+      // Queue exhausted — loop a random approved bump
       const bump = await getRandomApprovedBump();
       if (bump) {
         const queueId = await enqueueBump(bump.id);
