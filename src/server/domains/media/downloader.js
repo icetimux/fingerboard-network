@@ -140,7 +140,7 @@ export async function downloadVideo(url, outputDir, videoId) {
 function fetchMetadata(url) {
   return new Promise((resolve) => {
     let output = '';
-    const proc = spawn(YT_DLP, ['--skip-download', '--print', '%(duration)s\n%(title)s\n%(uploader)s', url]);
+    const proc = spawn(YT_DLP, ['--skip-download', '--print', '%(duration)s\n%(title)s\n%(uploader_id)s', url]);
     proc.stdout.on('data', (d) => { output += d.toString(); });
     proc.on('close', () => {
       const [durStr, title, channel] = output.trim().split('\n');
