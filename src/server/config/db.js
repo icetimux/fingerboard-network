@@ -26,6 +26,7 @@ const dbPromise = open({
   // Migrate existing DBs
   await db.run(`ALTER TABLE media ADD COLUMN title TEXT`).catch(() => {});
   await db.run(`ALTER TABLE media ADD COLUMN channel TEXT`).catch(() => {});
+  await db.run(`ALTER TABLE reset_tokens ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP`).catch(() => {});
 
   await db.run(`
     CREATE TABLE IF NOT EXISTS queue (
