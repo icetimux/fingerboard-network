@@ -7,6 +7,7 @@ export async function buildEnrichedState() {
   let duration = null;
   let title = null;
   let channel = null;
+  let url = null;
   let nextVideo = null;
   if (state.currentVideoId) {
     const vid = await getVideoWithMedia(state.currentVideoId);
@@ -14,12 +15,13 @@ export async function buildEnrichedState() {
     duration = vid?.duration ?? null;
     title = vid?.title ?? null;
     channel = vid?.channel ?? null;
+    url = vid?.url ?? null;
     const next = await getNextVideo(state.currentVideoId);
     if (next) {
       nextVideo = { title: next.title ?? null, channel: next.channel ?? null, url: next.url ?? null };
     }
   }
-  return { ...state, filePath, duration, title, channel, nextVideo };
+  return { ...state, filePath, duration, title, channel, url, nextVideo };
 }
 
 export const playbackController = {

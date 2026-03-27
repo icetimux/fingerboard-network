@@ -201,8 +201,8 @@
 <!-- Top: current video info (left) + up next (right) -->
 <div class="bg-gradient-to-b from-black/80 to-transparent px-4 py-3 flex items-start justify-between gap-4">
 <div class="min-w-0">
-<p id="overlay-title" class="text-white font-bold text-lg leading-snug drop-shadow-lg line-clamp-1"></p>
-<p id="overlay-channel" class="text-white/60 text-sm mt-1 drop-shadow line-clamp-1"><span id="overlay-channel-text"></span></p>
+<a id="overlay-title" class="text-white font-bold text-lg leading-snug drop-shadow-lg line-clamp-1 cursor-pointer hover:underline" target="_blank" rel="noopener"></a>
+<a id="overlay-channel" class="text-white/60 text-sm mt-1 drop-shadow line-clamp-1 cursor-pointer hover:underline block" target="_blank" rel="noopener"><span id="overlay-channel-text"></span></a>
 </div>
 <!-- Up Next card (top right) -->
 <div id="overlay-up-next" class="hidden items-center gap-3 bg-black/50 backdrop-blur-sm rounded-2xl px-3 py-2.5 border border-white/10 shrink-0 max-w-[240px]">
@@ -654,8 +654,15 @@ function ytThumb(url) {
 function updateOverlay(state) {
   const titleEl = document.getElementById('overlay-title');
   const channelEl = document.getElementById('overlay-channel-text');
-  if (titleEl) titleEl.textContent = state.title || '';
+  const channelLink = document.getElementById('overlay-channel');
+  if (titleEl) {
+    titleEl.textContent = state.title || '';
+    titleEl.href = state.url || '#';
+  }
   if (channelEl) channelEl.textContent = state.channel || '';
+  if (channelLink && state.channel) {
+    channelLink.href = `https://www.youtube.com/${state.channel}`;
+  }
 
   const upNextCard = document.getElementById('overlay-up-next');
   const upNextThumb = document.getElementById('up-next-thumb');
