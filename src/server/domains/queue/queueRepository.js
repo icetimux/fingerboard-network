@@ -61,12 +61,21 @@ export const queueRepository = {
 
   async getNext(currentId) {
     const db = await dbPromise;
+    if (!currentId) {
+      // Start from the most recently added entry
+      return db.get(
+        `SELECT q.*, ${ENRICHED_COLS}
+         FROM queue q
+         ${ENRICHED_JOINS}
+         ORDER BY q.id DESC LIMIT 1`
+      );
+    }
     return db.get(
       `SELECT q.*, ${ENRICHED_COLS}
        FROM queue q
        ${ENRICHED_JOINS}
-       WHERE q.id > ? ORDER BY q.id LIMIT 1`,
-      [currentId || 0]
+       WHERE q.id < ? ORDER BY q.id DESC LIMIT 1`,
+      [currentId]
     );
   },
 
