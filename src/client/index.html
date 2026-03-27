@@ -192,28 +192,48 @@
 <div class="flex flex-grow overflow-hidden relative">
 <!-- Main Immersive Video Pane -->
 <main class="flex-grow flex flex-col h-full bg-black relative justify-center group mr-80" id="main-content">
-<div class="relative group flex items-center justify-center w-full overflow-hidden aspect-video">
+<div class="relative flex items-center justify-center w-full overflow-hidden aspect-video">
 <!-- Video Content -->
 <video id="player" class="w-full h-full object-contain" playsinline muted></video>
-<!-- Minimal Overlay Controls -->
 </div>
-<div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 via-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
-<div class="flex items-center justify-between w-full h-16 px-6">
-<div class="flex items-center gap-6">
-<div class="flex items-center gap-3">
-<button class="text-white/90 hover:text-primary transition-colors" id="volume_up">
+<!-- Hover Overlay — covers full main including letterbox bars -->
+<div class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 flex flex-col justify-between select-none pointer-events-none group-hover:pointer-events-auto">
+<!-- Top: current video info (left) + up next (right) -->
+<div class="bg-gradient-to-b from-black/80 to-transparent px-4 py-3 flex items-start justify-between gap-4">
+<div class="min-w-0">
+<p id="overlay-title" class="text-white font-bold text-lg leading-snug drop-shadow-lg line-clamp-1"></p>
+<p id="overlay-channel" class="text-white/60 text-sm mt-1 drop-shadow line-clamp-1 flex items-center gap-1.5"><span class="material-symbols-outlined text-sm text-white/40">person</span><span id="overlay-channel-text"></span></p>
+</div>
+<!-- Up Next card (top right) -->
+<div id="overlay-up-next" class="hidden items-center gap-3 bg-black/50 backdrop-blur-sm rounded-2xl px-3 py-2.5 border border-white/10 shrink-0 max-w-[240px]">
+<div class="shrink-0 w-[80px] h-[45px] rounded-lg overflow-hidden bg-white/5 flex items-center justify-center">
+<img id="up-next-thumb" class="w-full h-full object-cover" src="" alt=""/>
+</div>
+<div class="min-w-0">
+<p class="text-[9px] font-bold uppercase tracking-[0.15em] text-primary mb-0.5">Up Next</p>
+<p id="up-next-title" class="text-white text-[11px] font-semibold leading-snug line-clamp-2"></p>
+<p id="up-next-channel" class="text-white/50 text-[10px] mt-0.5 truncate"></p>
+</div>
+</div>
+</div>
+<!-- Bottom: controls -->
+<div class="bg-gradient-to-t from-black/80 to-transparent px-5 py-3">
+<div class="flex items-center justify-between gap-4">
+<!-- Volume -->
+<div class="flex items-center gap-3 shrink-0">
+<button class="text-white/80 hover:text-white transition-colors" id="volume_up">
 <span class="material-symbols-outlined text-2xl">volume_up</span>
 </button>
 <input id="volume_range" class="w-24 h-1 bg-white/20 rounded-full appearance-none cursor-pointer accent-primary border-none p-0" max="100" min="0" type="range"/>
 </div>
-</div>
-<div class="flex items-center gap-6">
-<button class="text-white/90 hover:text-primary transition-colors" id="fullscreen">
+<!-- Fullscreen -->
+<button class="text-white/80 hover:text-white transition-colors shrink-0" id="fullscreen">
 <span class="material-symbols-outlined text-2xl">fullscreen</span>
 </button>
 </div>
 </div>
-</div></main>
+</div>
+</main>
 <!-- Simple Chat Sidebar -->
 <style>
     #main-content {
@@ -606,7 +626,37 @@ window.addEventListener('DOMContentLoaded', initChat);
 let video;
 let currentFilePath = null;
 
+function ytThumb(url) {
+  const m = url?.match(/(?:v=|youtu\.be\/|shorts\/)([A-Za-z0-9_-]{11})/);
+  return m ? `https://img.youtube.com/vi/${m[1]}/hqdefault.jpg` : '';
+}
+
+function updateOverlay(state) {
+  const titleEl = document.getElementById('overlay-title');
+  const channelEl = document.getElementById('overlay-channel-text');
+  if (titleEl) titleEl.textContent = state.title || '';
+  if (channelEl) channelEl.textContent = state.channel || '';
+
+  const upNextCard = document.getElementById('overlay-up-next');
+  const upNextThumb = document.getElementById('up-next-thumb');
+  const upNextTitle = document.getElementById('up-next-title');
+  const upNextChannel = document.getElementById('up-next-channel');
+  if (upNextCard) {
+    if (state.nextVideo?.title) {
+      upNextCard.classList.remove('hidden');
+      upNextCard.classList.add('flex');
+      if (upNextTitle) upNextTitle.textContent = state.nextVideo.title;
+      if (upNextChannel) upNextChannel.textContent = state.nextVideo.channel || '';
+      if (upNextThumb) upNextThumb.src = ytThumb(state.nextVideo.url);
+    } else {
+      upNextCard.classList.add('hidden');
+      upNextCard.classList.remove('flex');
+    }
+  }
+}
+
 function handleState(state) {
+  updateOverlay(state);
   if (!state.filePath) return;
 
   if (currentFilePath !== state.filePath) {

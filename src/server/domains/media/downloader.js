@@ -29,8 +29,8 @@ export async function downloadVideo(url, outputDir, videoId) {
     throw new Error(`Failed to create output directory: ${err.message}`);
   }
 
-  // Pre-flight: fetch duration metadata only (no download)
-  const duration = await fetchDuration(url);
+  // Pre-flight: fetch title, channel, and duration metadata (no download)
+  const { duration, title, channel } = await fetchMetadata(url);
 
   return new Promise((resolve, reject) => {
     let finalPath = null;
@@ -127,7 +127,7 @@ export async function downloadVideo(url, outputDir, videoId) {
             reject(new Error(`Failed to normalize filename: ${renameErr.message}`));
             return;
           }
-          resolve({ filePath: normalizedPath, duration });
+          resolve({ filePath: normalizedPath, duration, title, channel });
         }
       } else {
         const errorMsg = stderrOutput || `yt-dlp exited with code ${code}`;
@@ -137,15 +137,20 @@ export async function downloadVideo(url, outputDir, videoId) {
   });
 }
 
-function fetchDuration(url) {
+function fetchMetadata(url) {
   return new Promise((resolve) => {
     let output = '';
-    const proc = spawn(YT_DLP, ['--skip-download', '--print', '%(duration)s', url]);
+    const proc = spawn(YT_DLP, ['--skip-download', '--print', '%(duration)s\n%(title)s\n%(uploader)s', url]);
     proc.stdout.on('data', (d) => { output += d.toString(); });
     proc.on('close', () => {
-      const secs = parseFloat(output.trim());
-      resolve(Number.isFinite(secs) ? Math.round(secs) : null);
+      const [durStr, title, channel] = output.trim().split('\n');
+      const secs = parseFloat(durStr);
+      resolve({
+        duration: Number.isFinite(secs) ? Math.round(secs) : null,
+        title: title?.trim() || null,
+        channel: channel?.trim() || null,
+      });
     });
-    proc.on('error', () => resolve(null));
+    proc.on('error', () => resolve({ duration: null, title: null, channel: null }));
   });
 }

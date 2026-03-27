@@ -5,7 +5,7 @@ export const queueRepository = {
     const db = await dbPromise;
     return db.all(`
       SELECT q.id, q.media_id, q.type, q.added_at,
-             m.url, m.file_path
+             m.url, m.file_path, m.title, m.channel
       FROM queue q
       JOIN media m ON m.id = q.media_id
       ORDER BY q.added_at DESC
@@ -20,7 +20,7 @@ export const queueRepository = {
   async getVideoWithMedia(id) {
     const db = await dbPromise;
     return db.get(`
-      SELECT q.*, m.file_path, m.url, m.duration
+      SELECT q.*, m.file_path, m.url, m.duration, m.title, m.channel
       FROM queue q
       JOIN media m ON m.id = q.media_id
       WHERE q.id = ?
@@ -39,7 +39,10 @@ export const queueRepository = {
   async getNext(currentId) {
     const db = await dbPromise;
     return db.get(
-      "SELECT * FROM queue WHERE id > ? ORDER BY id LIMIT 1",
+      `SELECT q.*, m.duration, m.file_path, m.url, m.title, m.channel
+       FROM queue q
+       JOIN media m ON m.id = q.media_id
+       WHERE q.id > ? ORDER BY q.id LIMIT 1`,
       [currentId || 0]
     );
   },
@@ -47,7 +50,7 @@ export const queueRepository = {
   async getVideoById(id) {
     const db = await dbPromise;
     return db.get(`
-      SELECT q.*, m.duration, m.file_path, m.url
+      SELECT q.*, m.duration, m.file_path, m.url, m.title, m.channel
       FROM queue q
       JOIN media m ON m.id = q.media_id
       WHERE q.id = ?

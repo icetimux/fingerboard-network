@@ -5,12 +5,21 @@ import { ioInstance } from '../../sockets/socketHandler.js';
 export async function buildEnrichedState() {
   let filePath = null;
   let duration = null;
+  let title = null;
+  let channel = null;
+  let nextVideo = null;
   if (state.currentVideoId) {
     const vid = await getVideoWithMedia(state.currentVideoId);
     filePath = vid?.file_path ? '/' + vid.file_path : null;
     duration = vid?.duration ?? null;
+    title = vid?.title ?? null;
+    channel = vid?.channel ?? null;
+    const next = await getNextVideo(state.currentVideoId);
+    if (next) {
+      nextVideo = { title: next.title ?? null, channel: next.channel ?? null, url: next.url ?? null };
+    }
   }
-  return { ...state, filePath, duration };
+  return { ...state, filePath, duration, title, channel, nextVideo };
 }
 
 export const playbackController = {

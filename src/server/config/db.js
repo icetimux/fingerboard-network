@@ -16,10 +16,16 @@ const dbPromise = open({
       file_path TEXT,
       status TEXT DEFAULT 'pending',
       duration INTEGER DEFAULT 180,
+      title TEXT,
+      channel TEXT,
       error TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);
+
+  // Migrate existing DBs
+  await db.run(`ALTER TABLE media ADD COLUMN title TEXT`).catch(() => {});
+  await db.run(`ALTER TABLE media ADD COLUMN channel TEXT`).catch(() => {});
 
   await db.run(`
     CREATE TABLE IF NOT EXISTS queue (
