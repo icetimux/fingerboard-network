@@ -47,6 +47,11 @@ export const mediaRepository = {
     return db.get('SELECT id, status FROM media WHERE url = ?', [url]);
   },
 
+  async getById(id) {
+    const db = await dbPromise;
+    return db.get('SELECT * FROM media WHERE id=?', [id]);
+  },
+
   async deleteById(id) {
     const db = await dbPromise;
     await db.run('DELETE FROM media WHERE id=?', [id]);

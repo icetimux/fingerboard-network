@@ -220,6 +220,8 @@ async function loadBumps() {
               <span class="material-symbols-outlined text-base">check_circle</span>
               Approved
             </button>`
+              : bump.status === 'downloading'
+              ? ''
               : `<button onclick="approveBump(${bump.id})" class="px-3 py-1.5 text-xs font-semibold bg-primary text-on-primary rounded-lg shadow-sm hover:shadow-md transition-all active:scale-95 flex items-center gap-1.5">
               <span class="material-symbols-outlined text-base" data-icon="check_circle">check_circle</span>
               Approve

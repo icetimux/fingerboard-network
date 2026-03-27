@@ -1,10 +1,7 @@
 ---
 TODO
 - drift correction to stay more in sync
-- add a button to refhuffle order of queue
-- toggle between being abel to see only arppvoed and not yet approved media submissions
 - only makt it download the video once its approved. same for bumps
-
 ---
 
 # Synchronized Video + Chat Server
