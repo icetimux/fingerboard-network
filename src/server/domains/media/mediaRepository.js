@@ -46,4 +46,9 @@ export const mediaRepository = {
     const db = await dbPromise;
     return db.get('SELECT id, status FROM media WHERE url = ?', [url]);
   },
+
+  async deleteById(id) {
+    const db = await dbPromise;
+    await db.run('DELETE FROM media WHERE id=?', [id]);
+  },
 };

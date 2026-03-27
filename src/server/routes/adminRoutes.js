@@ -6,6 +6,7 @@ import { playbackController, buildEnrichedState } from '../domains/playback/cont
 import { state as playbackState } from '../domains/playback/state.js';
 import { getQueue, getQueueWithMedia } from '../domains/queue/queueService.js';
 import { approve } from '../domains/media/mediaService.js';
+import { mediaRepository } from '../domains/media/mediaRepository.js';
 import { approveBump } from '../domains/bumps/bumpService.js';
 import { bumpRepository } from '../domains/bumps/bumpRepository.js';
 import dbPromise from '../config/db.js';
@@ -57,6 +58,19 @@ router.get('/queue-data', basicAuth, async (req, res) => {
 // Get playback state
 router.get('/playback-state', basicAuth, async (req, res) => {
   res.json(await buildEnrichedState());
+});
+
+// Delete submission
+router.delete('/submissions/:id', basicAuth, async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid id' });
+    await mediaRepository.deleteById(id);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting submission:', error);
+    res.status(500).json({ error: 'Failed to delete submission' });
+  }
 });
 
 // Approve video

@@ -1,10 +1,18 @@
 ---
 TODO
 - add bumps table that is like videos table but for bumps
-- write logic when queing that if table is empty, to try again but this time from the bumps
-  then it should start looping bumps until queue is populated
-- when a video that is already in the media, dont download it and add id againt to avoid duplication
-- add bumps for when queue ends, it will loop some bumps.
+- write logic when queing that when queue ends, to try again but this time from the bumps and keep looping these
+  then it should start looping bumps until queue is populated again, then it should start playing the queue, and go back to looping bumps when the queue ends
+- when a video that is already in the media, dont download it and add it again to avoid duplication
+- the bumps function the same as a media submission but get their own table, they are alaso submitted via the chat using /bump and a youtueb url. also show how to do this in the welcome message.
+- bumps also need to be approved before they get to go in the queue.
+- i think i need to seperate queues so a media qeueue and a bumps queueue not sure.
+- i also want, that everytime a video is approved and set in the queue, that a bump video is also picked at random from the bumos tabel and put into that queue of the media. so a random bump plays after every submission.
+if turns out its better to have 2 queue tables and switch between them, then seperate the table names in the db also obviously correctly.
+
+- drift correction to stay more in sync
+- add a button to refhuffle order of queue
+- toggle between being abel to see only arppvoed and not yet approved media submissions
 ---
 
 # Synchronized Video + Chat Server

@@ -123,7 +123,6 @@
 <thead>
 <tr class="bg-surface-container/50">
 <th class="px-8 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant font-manrope">ID</th>
-<th class="px-8 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant font-manrope">URL</th>
 <th class="px-8 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant font-manrope">File Path</th>
 <th class="px-8 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant font-manrope">Status</th>
 <th class="px-8 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant font-manrope text-right">Actions</th>
@@ -189,13 +188,9 @@ async function loadSubmissions() {
       row.className = 'group hover:bg-surface-container-low transition-colors';
       
       const statusBadge = getStatusBadge(video.status, video.error);
-      const displayUrl = truncateUrl(video.url);
-      
+
       row.innerHTML = `
         <td class="px-8 py-6 text-sm font-medium text-on-surface-variant font-body">${video.id}</td>
-        <td class="px-8 py-6">
-          <a class="text-sm text-primary hover:underline font-medium font-body break-all" href="${video.url}" target="_blank" title="${video.url}">${displayUrl}</a>
-        </td>
         <td class="px-8 py-6 text-sm font-mono text-on-surface-variant">${video.file_path || '—'}</td>
         <td class="px-8 py-6">
           ${statusBadge}
@@ -215,6 +210,10 @@ async function loadSubmissions() {
               <span class="material-symbols-outlined text-lg" data-icon="check_circle">check_circle</span>
               Approve
             </button>`}
+            <button onclick="removeSubmission(${video.id}, this)" class="px-4 py-2 text-sm font-semibold text-error hover:bg-red-50 rounded-lg transition-all active:scale-95 flex items-center gap-2">
+              <span class="material-symbols-outlined text-lg">delete</span>
+              Remove
+            </button>
           </div>
         </td>
       `;
@@ -231,6 +230,20 @@ async function loadSubmissions() {
   } catch (error) {
     console.error('Error loading submissions:', error);
     alert('Error loading submissions');
+  }
+}
+
+async function removeSubmission(id, btn) {
+  if (!confirm('Remove this submission?')) return;
+  btn.disabled = true;
+  try {
+    const response = await fetch(`/admin/submissions/${id}`, { method: 'DELETE' });
+    if (!response.ok) { alert('Failed to remove submission'); btn.disabled = false; return; }
+    btn.closest('tr').remove();
+  } catch (error) {
+    console.error('Error removing submission:', error);
+    alert('Error removing submission');
+    btn.disabled = false;
   }
 }
 
