@@ -122,6 +122,34 @@ router.post('/skip', basicAuth, async (req, res) => {
   }
 });
 
+// Shuffle queue
+router.post('/shuffle-queue', basicAuth, async (req, res) => {
+  try {
+    const db = await dbPromise;
+    const rows = await db.all('SELECT id FROM queue ORDER BY RANDOM()');
+    await db.run('BEGIN');
+    try {
+      for (let i = 0; i < rows.length; i++) {
+        await db.run('UPDATE queue SET id = ? WHERE id = ?', [-(i + 1), rows[i].id]);
+      }
+      for (let i = 0; i < rows.length; i++) {
+        await db.run('UPDATE queue SET id = ? WHERE id = ?', [i + 1, -(i + 1)]);
+      }
+      if (rows.length) {
+        await db.run("UPDATE sqlite_sequence SET seq = ? WHERE name = 'queue'", [rows.length]);
+      }
+      await db.run('COMMIT');
+    } catch (err) {
+      await db.run('ROLLBACK');
+      throw err;
+    }
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error shuffling queue:', error);
+    res.status(500).json({ error: 'Failed to shuffle queue' });
+  }
+});
+
 // Bump loop — immediately start playing random bumps
 router.post('/bump-loop', basicAuth, async (req, res) => {
   try {

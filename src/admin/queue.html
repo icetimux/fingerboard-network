@@ -134,6 +134,10 @@ Skip
 <span class="material-symbols-outlined">rebase_edit</span>
 Bump Loop
 </button>
+<button onclick="shuffleQueue()" class="flex items-center gap-2 px-6 py-2.5 bg-surface-container-lowest text-on-surface-variant font-semibold rounded-lg shadow-sm hover:bg-surface-container-high transition-all">
+<span class="material-symbols-outlined">shuffle</span>
+Shuffle
+</button>
 </div>
 <div class="flex items-center gap-4 text-xs font-bold text-on-surface-variant uppercase tracking-widest px-4">
 <span id="liveIndicator" class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-gray-400"></span> Idle</span>
@@ -239,6 +243,17 @@ async function skipVideo() {
     loadQueue();
   } catch (err) {
     console.error('Error skipping:', err);
+  }
+}
+
+async function shuffleQueue() {
+  try {
+    const res = await fetch('/admin/shuffle-queue', { method: 'POST' });
+    const data = await res.json();
+    if (!res.ok) { alert(data.error || 'Failed to shuffle queue'); return; }
+    loadQueue();
+  } catch (err) {
+    console.error('Error shuffling queue:', err);
   }
 }
 

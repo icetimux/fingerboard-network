@@ -117,6 +117,15 @@
 <div class="mb-12">
 <h1 class="text-5xl font-extrabold tracking-tight text-on-surface font-manrope">Submissions</h1>
 </div>
+<!-- Filter Bar -->
+<div class="flex items-center gap-2 mb-6">
+  <span class="text-xs font-bold uppercase tracking-widest text-on-surface-variant mr-2">Filter:</span>
+  <button onclick="setFilter(null)" id="filter-all" class="px-4 py-1.5 text-xs font-semibold rounded-full bg-primary text-on-primary transition-all">All</button>
+  <button onclick="setFilter('approved')" id="filter-approved" class="px-4 py-1.5 text-xs font-semibold rounded-full bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-all">Approved</button>
+  <button onclick="setFilter('ready')" id="filter-ready" class="px-4 py-1.5 text-xs font-semibold rounded-full bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-all">Ready</button>
+  <button onclick="setFilter('downloading')" id="filter-downloading" class="px-4 py-1.5 text-xs font-semibold rounded-full bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-all">Downloading</button>
+  <button onclick="setFilter('failed')" id="filter-failed" class="px-4 py-1.5 text-xs font-semibold rounded-full bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-all">Failed</button>
+</div>
 <!-- Dashboard Content: Data Table -->
 <div class="bg-surface-container-lowest rounded-xl shadow-sm border border-surface-container overflow-hidden">
 <table class="w-full text-left border-collapse">
@@ -166,6 +175,38 @@ function truncateUrl(url, maxLength = 60) {
   return url;
 }
 
+let activeFilter = null;
+
+function setFilter(status) {
+  activeFilter = status;
+  // Update button styles
+  const filters = [null, 'approved', 'ready', 'downloading', 'failed'];
+  const ids = ['filter-all', 'filter-approved', 'filter-ready', 'filter-downloading', 'filter-failed'];
+  filters.forEach((f, i) => {
+    const btn = document.getElementById(ids[i]);
+    if (!btn) return;
+    if (f === status) {
+      btn.className = 'px-4 py-1.5 text-xs font-semibold rounded-full bg-primary text-on-primary transition-all';
+    } else {
+      btn.className = 'px-4 py-1.5 text-xs font-semibold rounded-full bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-all';
+    }
+  });
+  applyFilter();
+}
+
+let allSubmissions = [];
+
+function applyFilter() {
+  const tbody = document.getElementById('submissionsTable');
+  tbody.innerHTML = '';
+  const filtered = activeFilter ? allSubmissions.filter(v => v.status === activeFilter) : allSubmissions;
+  if (filtered.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" class="px-8 py-10 text-center text-on-surface-variant">No submissions found</td></tr>';
+    return;
+  }
+  filtered.forEach(video => renderRow(video, tbody));
+}
+
 async function loadSubmissions() {
   try {
     const response = await fetch('/admin/all');
@@ -175,21 +216,22 @@ async function loadSubmissions() {
     }
     
     const submissions = await response.json();
-    const tbody = document.getElementById('submissionsTable');
-    tbody.innerHTML = '';
-    
-    if (submissions.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="4" class="px-8 py-10 text-center text-on-surface-variant">No submissions found</td></tr>';
-      return;
-    }
-    
-    submissions.forEach(video => {
-      const row = document.createElement('tr');
-      row.className = 'group hover:bg-surface-container-low transition-colors';
-      
-      const statusBadge = getStatusBadge(video.status, video.error);
+    allSubmissions = submissions;
+    applyFilter();
+  } catch (error) {
+    console.error('Error loading submissions:', error);
+    alert('Error loading submissions');
+  }
+}
 
-      row.innerHTML = `
+function renderRow(video, tbody) {
+    const row = document.createElement('tr');
+    row.className = 'group hover:bg-surface-container-low transition-colors';
+    row.dataset.id = video.id;
+    
+    const statusBadge = getStatusBadge(video.status, video.error);
+
+    row.innerHTML = `
         <td class="px-8 py-6 text-sm font-medium text-on-surface-variant font-body">${video.id}</td>
         <td class="px-8 py-6 text-sm font-mono text-on-surface-variant">${video.file_path || '—'}</td>
         <td class="px-8 py-6">
@@ -218,19 +260,14 @@ async function loadSubmissions() {
         </td>
       `;
       
-      tbody.appendChild(row);
+    tbody.appendChild(row);
 
-      const failedBadge = row.querySelector('.failed-badge');
-      if (failedBadge) {
-        failedBadge.addEventListener('click', () => {
-          showErrorModal(video.error || 'No error message');
-        });
-      }
-    });
-  } catch (error) {
-    console.error('Error loading submissions:', error);
-    alert('Error loading submissions');
-  }
+    const failedBadge = row.querySelector('.failed-badge');
+    if (failedBadge) {
+      failedBadge.addEventListener('click', () => {
+        showErrorModal(video.error || 'No error message');
+      });
+    }
 }
 
 async function removeSubmission(id, btn) {
@@ -239,6 +276,7 @@ async function removeSubmission(id, btn) {
   try {
     const response = await fetch(`/admin/submissions/${id}`, { method: 'DELETE' });
     if (!response.ok) { alert('Failed to remove submission'); btn.disabled = false; return; }
+    allSubmissions = allSubmissions.filter(v => v.id !== id);
     btn.closest('tr').remove();
   } catch (error) {
     console.error('Error removing submission:', error);

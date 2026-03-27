@@ -92,5 +92,27 @@ export const queueRepository = {
   async deleteById(id) {
     const db = await dbPromise;
     await db.run('DELETE FROM queue WHERE id = ?', [id]);
+  },
+
+  async shuffle() {
+    const db = await dbPromise;
+    const rows = await db.all('SELECT id FROM queue ORDER BY RANDOM()');
+    // Re-assign IDs via a temp negative range to avoid unique constraint conflicts,
+    // then assign final sequential IDs so ORDER BY id DESC gives the shuffled order
+    await db.run('BEGIN');
+    try {
+      for (let i = 0; i < rows.length; i++) {
+        await db.run('UPDATE queue SET id = ? WHERE id = ?', [-(i + 1), rows[i].id]);
+      }
+      for (let i = 0; i < rows.length; i++) {
+        await db.run('UPDATE queue SET id = ? WHERE id = ?', [i + 1, -(i + 1)]);
+      }
+      // Reset sqlite autoincrement sequence
+      await db.run("UPDATE sqlite_sequence SET seq = ? WHERE name = 'queue'", [rows.length]);
+      await db.run('COMMIT');
+    } catch (err) {
+      await db.run('ROLLBACK');
+      throw err;
+    }
   }
 };
