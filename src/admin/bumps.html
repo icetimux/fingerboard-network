@@ -125,8 +125,8 @@
 <tr class="bg-surface-container/50">
 <th class="px-8 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant font-manrope">ID</th>
 <th class="px-8 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant font-manrope">Title</th>
-<th class="px-8 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant font-manrope">URL</th>
 <th class="px-8 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant font-manrope">Status</th>
+<th class="px-8 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant font-manrope w-36">Created</th>
 <th class="px-8 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant font-manrope text-right">Actions</th>
 </tr>
 </thead>
@@ -166,6 +166,17 @@ function truncateUrl(url, maxLength = 60) {
   return url;
 }
 
+function formatDate(ts) {
+  if (!ts) return '—';
+  const d = new Date(ts);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const hour = String(d.getHours()).padStart(2, '0');
+  const min = String(d.getMinutes()).padStart(2, '0');
+  return `${year}-${month}-${day} ${hour}:${min}`;
+}
+
 async function loadBumps() {
   try {
     const response = await fetch('/admin/bumps-data');
@@ -179,7 +190,7 @@ async function loadBumps() {
     tbody.innerHTML = '';
 
     if (bumps.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="5" class="px-8 py-10 text-center text-on-surface-variant">No bumps found. Submit one with <code>/bump &lt;url&gt;</code> in chat.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6" class="px-8 py-10 text-center text-on-surface-variant">No bumps found. Submit one with <code>/bump &lt;url&gt;</code> in chat.</td></tr>';
       return;
     }
 
@@ -195,22 +206,28 @@ async function loadBumps() {
         <td class="px-8 py-6 text-sm font-medium text-on-surface-variant font-body">${bump.id}</td>
         <td class="px-8 py-6 text-sm font-medium text-on-surface font-body">${displayTitle}</td>
         <td class="px-8 py-6">
-          <a class="text-sm text-primary hover:underline font-medium font-body break-all" href="${escapeHtml(bump.url || '')}" target="_blank" title="${escapeHtml(bump.url || '')}">${escapeHtml(displayUrl)}</a>
-        </td>
-        <td class="px-8 py-6">
           ${statusBadge}
         </td>
-        <td class="px-8 py-6 text-right">
-          <div class="flex items-center justify-end gap-3">
+        <td class="px-8 py-6 text-sm text-on-surface-variant whitespace-nowrap">${formatDate(bump.created_at)}</td>
+        <td class="px-4 py-6 text-right">
+          <div class="flex items-center justify-end gap-2">
+            <a href="${escapeHtml(bump.url || '')}" target="_blank" class="px-3 py-1.5 text-xs font-semibold text-secondary hover:bg-surface-container rounded-lg transition-all active:scale-95 flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-base">visibility</span>
+              View
+            </a>
             ${bump.status === 'approved'
-              ? `<button disabled class="px-5 py-2 text-sm font-semibold bg-surface-container text-on-surface-variant rounded-lg flex items-center gap-2 cursor-not-allowed opacity-50">
-              <span class="material-symbols-outlined text-lg">check_circle</span>
+              ? `<button disabled class="px-3 py-1.5 text-xs font-semibold bg-surface-container text-on-surface-variant rounded-lg flex items-center gap-1.5 cursor-not-allowed opacity-50">
+              <span class="material-symbols-outlined text-base">check_circle</span>
               Approved
             </button>`
-              : `<button onclick="approveBump(${bump.id})" class="px-5 py-2 text-sm font-semibold bg-primary text-on-primary rounded-lg shadow-sm hover:shadow-md transition-all active:scale-95 flex items-center gap-2">
-              <span class="material-symbols-outlined text-lg" data-icon="check_circle">check_circle</span>
+              : `<button onclick="approveBump(${bump.id})" class="px-3 py-1.5 text-xs font-semibold bg-primary text-on-primary rounded-lg shadow-sm hover:shadow-md transition-all active:scale-95 flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-base" data-icon="check_circle">check_circle</span>
               Approve
             </button>`}
+            <button onclick="deleteBump(${bump.id}, this)" class="px-3 py-1.5 text-xs font-semibold text-error hover:bg-red-50 rounded-lg transition-all active:scale-95 flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-base">delete</span>
+              Remove
+            </button>
           </div>
         </td>
       `;
@@ -227,6 +244,19 @@ async function loadBumps() {
   } catch (error) {
     console.error('Error loading bumps:', error);
     alert('Error loading bumps');
+  }
+}
+
+async function deleteBump(id, btn) {
+  if (!confirm('Remove this bump?')) return;
+  btn.disabled = true;
+  try {
+    const res = await fetch(`/admin/bumps/${id}`, { method: 'DELETE' });
+    if (!res.ok) { alert('Failed to remove bump'); btn.disabled = false; return; }
+    btn.closest('tr').remove();
+  } catch (err) {
+    console.error('Error deleting bump:', err);
+    btn.disabled = false;
   }
 }
 

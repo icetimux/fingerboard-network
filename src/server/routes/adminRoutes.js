@@ -162,6 +162,33 @@ router.post('/bump-loop', basicAuth, async (req, res) => {
   }
 });
 
+// Delete queue entry
+router.delete('/queue/:id', basicAuth, async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid id' });
+    const db = await dbPromise;
+    await db.run('DELETE FROM queue WHERE id=?', [id]);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting queue entry:', error);
+    res.status(500).json({ error: 'Failed to delete queue entry' });
+  }
+});
+
+// Delete bump
+router.delete('/bumps/:id', basicAuth, async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid id' });
+    await bumpRepository.deleteById(id);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting bump:', error);
+    res.status(500).json({ error: 'Failed to delete bump' });
+  }
+});
+
 // Get all bumps
 router.get('/bumps-data', basicAuth, async (req, res) => {
   try {

@@ -50,4 +50,9 @@ export const bumpRepository = {
     }
     return db.get("SELECT * FROM bumps WHERE status='approved' ORDER BY RANDOM() LIMIT 1");
   },
+
+  async deleteById(id) {
+    const db = await dbPromise;
+    await db.run('DELETE FROM bumps WHERE id=?', [id]);
+  },
 };

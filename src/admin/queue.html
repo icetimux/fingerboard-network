@@ -160,8 +160,8 @@ Shuffle
 <th class="px-8 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant font-manrope">Queue ID</th>
 <th class="px-8 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant font-manrope">Media ID</th>
 <th class="px-8 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant font-manrope">File Path</th>
-<th class="px-8 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant font-manrope">URL</th>
 <th class="px-8 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant font-manrope w-36">Added</th>
+<th class="px-8 py-5"></th>
 </tr>
 </thead>
 <tbody id="queueTable" class="divide-y divide-surface-container">
@@ -246,6 +246,18 @@ async function skipVideo() {
   }
 }
 
+async function deleteQueueEntry(id, btn) {
+  btn.disabled = true;
+  try {
+    const res = await fetch(`/admin/queue/${id}`, { method: 'DELETE' });
+    if (!res.ok) { alert('Failed to remove entry'); btn.disabled = false; return; }
+    btn.closest('tr').remove();
+  } catch (err) {
+    console.error('Error deleting queue entry:', err);
+    btn.disabled = false;
+  }
+}
+
 async function shuffleQueue() {
   try {
     const res = await fetch('/admin/shuffle-queue', { method: 'POST' });
@@ -309,7 +321,7 @@ async function loadQueue() {
     tbody.innerHTML = '';
 
     if (items.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="5" class="px-8 py-10 text-center text-on-surface-variant">Queue is empty</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6" class="px-8 py-10 text-center text-on-surface-variant">Queue is empty</td></tr>';
       return;
     }
 
@@ -320,10 +332,19 @@ async function loadQueue() {
         <td class="px-8 py-6 text-sm font-medium text-on-surface-variant font-body">${item.id}</td>
         <td class="px-8 py-6 text-sm font-medium text-on-surface-variant font-body">${item.media_id}</td>
         <td class="px-8 py-6 text-sm font-mono text-on-surface-variant">${item.file_path || '—'}</td>
-        <td class="px-8 py-6">
-          <a href="${item.url}" target="_blank" class="text-sm text-primary hover:underline font-medium break-all">${truncate(item.url, 35)}</a>
-        </td>
         <td class="px-8 py-6 text-sm text-on-surface-variant whitespace-nowrap">${formatDate(item.added_at)}</td>
+        <td class="px-4 py-6 text-right">
+          <div class="flex items-center justify-end gap-2">
+            <a href="${item.url}" target="_blank" class="px-3 py-1.5 text-xs font-semibold text-secondary hover:bg-surface-container rounded-lg transition-all active:scale-95 flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-base">visibility</span>
+              View
+            </a>
+            <button onclick="deleteQueueEntry(${item.id}, this)" class="px-3 py-1.5 text-xs font-semibold text-error hover:bg-red-50 rounded-lg transition-all active:scale-95 flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-base">delete</span>
+              Remove
+            </button>
+          </div>
+        </td>
       `;
       tbody.appendChild(row);
     });

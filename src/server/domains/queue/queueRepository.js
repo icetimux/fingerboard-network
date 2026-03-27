@@ -22,7 +22,7 @@ export const queueRepository = {
              ${ENRICHED_COLS}
       FROM queue q
       ${ENRICHED_JOINS}
-      ORDER BY q.added_at DESC
+      ORDER BY q.id DESC
     `);
   },
 
