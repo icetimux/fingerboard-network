@@ -1,8 +1,20 @@
 import { state } from './state.js';
-import { getNextVideo, getVideoById, getVideoWithMedia, enqueueBump, getRandomApprovedBump } from '../queue/queueService.js';
+import { getNextVideo, getVideoWithMedia, getRandomApprovedBump } from '../queue/queueService.js';
 import { ioInstance } from '../../sockets/socketHandler.js';
 
 export async function buildEnrichedState() {
+  if (state.currentBump) {
+    const b = state.currentBump;
+    return {
+      ...state,
+      filePath: b.file_path ? '/' + b.file_path : null,
+      duration: b.duration ?? null,
+      title: b.title ?? null,
+      channel: b.channel ?? null,
+      url: b.url ?? null,
+      nextVideo: null
+    };
+  }
   let filePath = null;
   let duration = null;
   let title = null;
@@ -24,11 +36,31 @@ export async function buildEnrichedState() {
   return { ...state, filePath, duration, title, channel, url, nextVideo };
 }
 
+async function playBump(excludeId = null) {
+  const bump = await getRandomApprovedBump(excludeId);
+  if (!bump) return false;
+  state.currentBump = bump;
+  state.startedAt = Date.now();
+  state.pausedAt = 0;
+  state.playing = true;
+  ioInstance.emit('state', await buildEnrichedState());
+  return true;
+}
+
 export const playbackController = {
+  // Play — exits bump loop mode and starts the media queue
   async play() {
+    state.bumpLoopMode = false;
+    state.currentBump = null;
     if (!state.currentVideoId) {
-      await this.next();
-      return;
+      const nextMedia = await getNextVideo(null);
+      if (!nextMedia) {
+        // Queue empty — re-enter bump loop
+        state.bumpLoopMode = true;
+        await playBump();
+        return;
+      }
+      state.currentVideoId = nextMedia.id;
     }
     state.playing = true;
     state.startedAt = Date.now() - state.pausedAt * 1000;
@@ -42,25 +74,83 @@ export const playbackController = {
   },
 
   async next() {
-    let nextVideo = await getNextVideo(state.currentVideoId);
-    if (!nextVideo) {
-      // Queue exhausted — loop a random approved bump
+    if (state.bumpLoopMode) {
+      // Bump loop mode: always cycle to next random bump, never touch queue
+      const lastId = state.currentBump?.id ?? null;
+      state.currentBump = null;
+      const played = await playBump(lastId);
+      if (!played) {
+        state.playing = false;
+        ioInstance.emit('state', await buildEnrichedState());
+      }
+      return;
+    }
+
+    if (state.currentBump) {
+      // Just finished a between-media bump — advance to next media
+      const lastBumpId = state.currentBump.id;
+      state.currentBump = null;
+      const nextMedia = await getNextVideo(state.currentVideoId);
+      if (nextMedia) {
+        state.currentVideoId = nextMedia.id;
+        state.startedAt = Date.now();
+        state.pausedAt = 0;
+        state.playing = true;
+        ioInstance.emit('state', await buildEnrichedState());
+        return;
+      }
+      // Queue exhausted — switch to bump loop
+      state.bumpLoopMode = true;
+      await playBump(lastBumpId);
+      return;
+    }
+
+    if (state.currentVideoId) {
+      // Just finished a media video — play a bump between if available
       const bump = await getRandomApprovedBump();
       if (bump) {
-        const queueId = await enqueueBump(bump.id);
-        nextVideo = await getVideoById(queueId);
+        state.currentBump = bump;
+        state.startedAt = Date.now();
+        state.pausedAt = 0;
+        state.playing = true;
+        ioInstance.emit('state', await buildEnrichedState());
+        return;
       }
-    }
-    if (!nextVideo) {
+      // No bumps — go straight to next media
+      const nextMedia = await getNextVideo(state.currentVideoId);
+      if (nextMedia) {
+        state.currentVideoId = nextMedia.id;
+        state.startedAt = Date.now();
+        state.pausedAt = 0;
+        state.playing = true;
+        ioInstance.emit('state', await buildEnrichedState());
+        return;
+      }
+      // Queue exhausted, no bumps — stop
       state.playing = false;
       state.currentVideoId = null;
       ioInstance.emit('state', await buildEnrichedState());
       return;
     }
-    state.currentVideoId = nextVideo.id;
-    state.startedAt = Date.now();
-    state.pausedAt = 0;
-    state.playing = true;
+
+    // Nothing playing — start from queue
+    const nextMedia = await getNextVideo(null);
+    if (nextMedia) {
+      state.currentVideoId = nextMedia.id;
+      state.startedAt = Date.now();
+      state.pausedAt = 0;
+      state.playing = true;
+      ioInstance.emit('state', await buildEnrichedState());
+      return;
+    }
+    state.playing = false;
     ioInstance.emit('state', await buildEnrichedState());
+  },
+
+  async startBumpLoop() {
+    state.bumpLoopMode = true;
+    state.currentVideoId = null;
+    state.currentBump = null;
+    return playBump();
   }
 };

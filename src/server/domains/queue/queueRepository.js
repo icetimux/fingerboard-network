@@ -78,5 +78,10 @@ export const queueRepository = {
       ${ENRICHED_JOINS}
       WHERE q.id = ?
     `, [id]);
+  },
+
+  async deleteById(id) {
+    const db = await dbPromise;
+    await db.run('DELETE FROM queue WHERE id = ?', [id]);
   }
 };

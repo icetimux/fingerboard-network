@@ -43,8 +43,11 @@ export const bumpRepository = {
     return db.all("SELECT * FROM bumps ORDER BY created_at DESC");
   },
 
-  async getRandomApproved() {
+  async getRandomApproved(excludeId = null) {
     const db = await dbPromise;
+    if (excludeId) {
+      return db.get("SELECT * FROM bumps WHERE status='approved' AND id != ? ORDER BY RANDOM() LIMIT 1", [excludeId]);
+    }
     return db.get("SELECT * FROM bumps WHERE status='approved' ORDER BY RANDOM() LIMIT 1");
   },
 };

@@ -4,7 +4,7 @@ import { fileURLToPath } from 'url';
 import { basicAuth } from '../middleware/basicAuth.js';
 import { playbackController, buildEnrichedState } from '../domains/playback/controller.js';
 import { state as playbackState } from '../domains/playback/state.js';
-import { getQueue, getQueueWithMedia, enqueueBump, getRandomApprovedBump } from '../domains/queue/queueService.js';
+import { getQueue, getQueueWithMedia } from '../domains/queue/queueService.js';
 import { approve } from '../domains/media/mediaService.js';
 import { approveBump } from '../domains/bumps/bumpService.js';
 import { bumpRepository } from '../domains/bumps/bumpRepository.js';
@@ -108,15 +108,11 @@ router.post('/skip', basicAuth, async (req, res) => {
   }
 });
 
-// Bump loop — drop into natural bump-loop state (clear current, play from empty queue)
+// Bump loop — immediately start playing random bumps
 router.post('/bump-loop', basicAuth, async (req, res) => {
   try {
-    const bump = await getRandomApprovedBump();
-    if (!bump) return res.status(404).json({ error: 'No approved bumps available' });
-    // Reset to idle so next() treats queue as exhausted and picks a bump
-    playbackState.playing = false;
-    playbackState.currentVideoId = null;
-    await playbackController.play();
+    const started = await playbackController.startBumpLoop();
+    if (!started) return res.status(404).json({ error: 'No approved bumps available' });
     res.json({ success: true });
   } catch (error) {
     console.error('Error starting bump loop:', error);

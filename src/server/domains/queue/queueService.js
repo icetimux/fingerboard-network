@@ -14,15 +14,8 @@ export async function getQueue() {
   return queueRepository.getQueue();
 }
 
-export async function enqueue(mediaId, type = 'media') {
-  const queueId = await queueRepository.enqueue(mediaId, type);
-  const queue = await getQueue();
-  ioInstance.emit('queue', queue);
-  return queueId;
-}
-
-export async function enqueueBump(bumpId) {
-  const queueId = await queueRepository.enqueueBump(bumpId);
+export async function enqueue(mediaId) {
+  const queueId = await queueRepository.enqueue(mediaId);
   const queue = await getQueue();
   ioInstance.emit('queue', queue);
   return queueId;
@@ -36,6 +29,6 @@ export async function getVideoById(id) {
   return queueRepository.getVideoById(id);
 }
 
-export async function getRandomApprovedBump() {
-  return bumpRepository.getRandomApproved();
+export async function getRandomApprovedBump(excludeId = null) {
+  return bumpRepository.getRandomApproved(excludeId);
 }
