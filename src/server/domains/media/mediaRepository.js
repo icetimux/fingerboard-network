@@ -41,4 +41,9 @@ export const mediaRepository = {
       [id]
     );
   },
+
+  async getByUrl(url) {
+    const db = await dbPromise;
+    return db.get('SELECT id, status FROM media WHERE url = ?', [url]);
+  },
 };

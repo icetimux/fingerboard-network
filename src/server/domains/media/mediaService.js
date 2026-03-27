@@ -3,13 +3,20 @@ import PQueue from 'p-queue';
 import { mediaRepository } from './mediaRepository.js';
 import { downloadVideo } from './downloader.js';
 import { ioInstance } from '../../sockets/socketHandler.js';
-import { enqueue } from '../queue/queueService.js';
+import { enqueue, enqueueBump, getRandomApprovedBump } from '../queue/queueService.js';
 
 const VIDEO_DIR = './videos';
 
 const downloadQueue = new PQueue({ concurrency: 2 });
 
 async function processVideo(url) {
+  // Deduplication: skip if URL already exists
+  const existing = await mediaRepository.getByUrl(url);
+  if (existing) {
+    ioInstance?.emit('chat:system', { text: 'This video has already been submitted.' });
+    return;
+  }
+
   const videoId = await mediaRepository.insertPending(url);
 
   // 🔔 notify pending
@@ -54,8 +61,13 @@ async function processVideo(url) {
 
 export async function approve(videoId) {
   await mediaRepository.setApproved(videoId);
-  // Move to queue now, use media id as fk in queue table
+  // Enqueue the media video
   await enqueue(videoId);
+  // Enqueue a random approved bump immediately after it
+  const bump = await getRandomApprovedBump();
+  if (bump) {
+    await enqueueBump(bump.id);
+  }
 }
 
 export const mediaService = {

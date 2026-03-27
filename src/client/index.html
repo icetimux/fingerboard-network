@@ -574,8 +574,8 @@ async function initChat() {
 
   chatInput.addEventListener('input', () => {
     if (activeCommand) return;
-    // Match '/submit' optionally followed by a space and the rest (handles paste too)
-    const match = chatInput.value.match(/^(\/submit)(?:\s(.*))?$/i);
+    // Match '/submit' or '/bump' optionally followed by a space and the rest (handles paste too)
+    const match = chatInput.value.match(/^(\/submit|\/bump)(?:\s(.*))?$/i);
     if (match) {
       activateCommand(match[1].toLowerCase(), (match[2] || '').trimStart());
     }

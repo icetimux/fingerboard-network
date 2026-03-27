@@ -1,4 +1,5 @@
 import { queueRepository } from './queueRepository.js';
+import { bumpRepository } from '../bumps/bumpRepository.js';
 import { ioInstance } from '../../sockets/socketHandler.js';
 
 export async function getVideoWithMedia(id) {
@@ -13,8 +14,15 @@ export async function getQueue() {
   return queueRepository.getQueue();
 }
 
-export async function enqueue(mediaId, type = 'video') {
+export async function enqueue(mediaId, type = 'media') {
   const queueId = await queueRepository.enqueue(mediaId, type);
+  const queue = await getQueue();
+  ioInstance.emit('queue', queue);
+  return queueId;
+}
+
+export async function enqueueBump(bumpId) {
+  const queueId = await queueRepository.enqueueBump(bumpId);
   const queue = await getQueue();
   ioInstance.emit('queue', queue);
   return queueId;
@@ -26,4 +34,8 @@ export async function getNextVideo(currentId) {
 
 export async function getVideoById(id) {
   return queueRepository.getVideoById(id);
+}
+
+export async function getRandomApprovedBump() {
+  return bumpRepository.getRandomApproved();
 }

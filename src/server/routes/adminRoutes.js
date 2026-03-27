@@ -6,8 +6,9 @@ import { playbackController, buildEnrichedState } from '../domains/playback/cont
 import { state as playbackState } from '../domains/playback/state.js';
 import { getQueue, getQueueWithMedia } from '../domains/queue/queueService.js';
 import { approve } from '../domains/media/mediaService.js';
+import { approveBump } from '../domains/bumps/bumpService.js';
+import { bumpRepository } from '../domains/bumps/bumpRepository.js';
 import dbPromise from '../config/db.js';
-import { getAllResetTokens } from '../domains/auth/authRepository.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -24,6 +25,10 @@ router.get('/submissions', basicAuth, async (req, res) => {
 
 router.get('/queue', basicAuth, async (req, res) => {
   res.sendFile(path.join(__dirname, '../../admin/queue.html'));
+});
+
+router.get('/bumps', basicAuth, async (req, res) => {
+  res.sendFile(path.join(__dirname, '../../admin/bumps.html'));
 });
 
 // Get all media
@@ -103,18 +108,27 @@ router.post('/skip', basicAuth, async (req, res) => {
   }
 });
 
-// Reset tokens page
-router.get('/reset-tokens', basicAuth, (req, res) => {
-  res.sendFile(path.join(__dirname, '../../admin/reset-tokens.html'));
+// Get all bumps
+router.get('/bumps-data', basicAuth, async (req, res) => {
+  try {
+    const bumps = await bumpRepository.getAll();
+    res.json(bumps);
+  } catch (error) {
+    console.error('Error fetching bumps:', error);
+    res.status(500).json({ error: 'Failed to fetch bumps' });
+  }
 });
 
-// Reset tokens data (JSON)
-router.get('/reset-tokens-data', basicAuth, async (req, res) => {
+// Approve bump
+router.post('/approve-bump/:id', basicAuth, async (req, res) => {
   try {
-    const tokens = await getAllResetTokens();
-    res.json(tokens);
+    const id = parseInt(req.params.id, 10);
+    if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid id' });
+    await approveBump(id);
+    res.json({ success: true });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch reset tokens' });
+    console.error('Error approving bump:', error);
+    res.status(500).json({ error: 'Failed to approve bump' });
   }
 });
 

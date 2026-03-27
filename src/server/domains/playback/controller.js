@@ -1,5 +1,5 @@
 import { state } from './state.js';
-import { getNextVideo, getVideoById, getVideoWithMedia } from '../queue/queueService.js';
+import { getNextVideo, getVideoById, getVideoWithMedia, enqueueBump, getRandomApprovedBump } from '../queue/queueService.js';
 import { ioInstance } from '../../sockets/socketHandler.js';
 
 export async function buildEnrichedState() {
@@ -42,7 +42,15 @@ export const playbackController = {
   },
 
   async next() {
-    const nextVideo = await getNextVideo(state.currentVideoId);
+    let nextVideo = await getNextVideo(state.currentVideoId);
+    if (!nextVideo) {
+      // Queue exhausted — try to loop a random approved bump
+      const bump = await getRandomApprovedBump();
+      if (bump) {
+        const queueId = await enqueueBump(bump.id);
+        nextVideo = await getVideoById(queueId);
+      }
+    }
     if (!nextVideo) {
       state.playing = false;
       state.currentVideoId = null;

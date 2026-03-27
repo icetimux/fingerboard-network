@@ -3,7 +3,7 @@
 <html class="light" lang="en"><head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Submissions</title>
+<title>Bumps</title>
 <script src="/socket.io/socket.io.js"></script>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
@@ -89,8 +89,8 @@
 <h2 class="text-xl font-bold tracking-tight text-on-surface font-manrope">Admin Panel</h2>
 </div>
 <nav class="flex-1 space-y-2">
-<!-- Active Navigation: Submissions -->
-<a class="flex items-center gap-3 p-3 bg-primary/10 text-primary font-semibold rounded-lg transition-all duration-200 ease-in-out" href="submissions">
+<!-- Link to Submissions -->
+<a class="flex items-center gap-3 p-3 text-on-surface-variant hover:bg-surface-container transition-all duration-200 ease-in-out rounded-lg" href="submissions">
 <span class="material-symbols-outlined" data-icon="description">description</span>
 <span class="font-manrope text-sm font-medium">Submissions</span>
 </a>
@@ -99,14 +99,14 @@
 <span class="material-symbols-outlined" data-icon="hourglass_empty">hourglass_empty</span>
 <span class="font-manrope text-sm font-medium">Queue</span>
 </a>
-<!-- Link to Bumps -->
-<a class="flex items-center gap-3 p-3 text-on-surface-variant hover:bg-surface-container transition-all duration-200 ease-in-out rounded-lg" href="bumps">
+<!-- Active Navigation: Bumps -->
+<a class="flex items-center gap-3 p-3 bg-primary/10 text-primary font-semibold rounded-lg transition-all duration-200 ease-in-out" href="bumps">
 <span class="material-symbols-outlined" data-icon="movie">movie</span>
 <span class="font-manrope text-sm font-medium">Bumps</span>
 </a>
 </nav>
 </aside>
-<!-- TopNavBar Shell (Simplified for consistency) -->
+<!-- TopNavBar Shell -->
 <header class="fixed top-0 right-0 w-[calc(100%-16rem)] z-10 bg-surface/80 backdrop-blur-md flex justify-between items-center px-12 py-4 h-16 border-b border-surface-container">
 <div class="flex items-center flex-1"></div>
 </header>
@@ -115,7 +115,8 @@
 <div class="px-12 max-w-7xl mx-auto">
 <!-- Page Header -->
 <div class="mb-12">
-<h1 class="text-5xl font-extrabold tracking-tight text-on-surface font-manrope">Submissions</h1>
+<h1 class="text-5xl font-extrabold tracking-tight text-on-surface font-manrope">Bumps</h1>
+<p class="mt-3 text-sm text-on-surface-variant">Short interstitial clips submitted via <code>/bump &lt;url&gt;</code> in chat. Approved bumps play between queue entries.</p>
 </div>
 <!-- Dashboard Content: Data Table -->
 <div class="bg-surface-container-lowest rounded-xl shadow-sm border border-surface-container overflow-hidden">
@@ -123,13 +124,13 @@
 <thead>
 <tr class="bg-surface-container/50">
 <th class="px-8 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant font-manrope">ID</th>
+<th class="px-8 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant font-manrope">Title</th>
 <th class="px-8 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant font-manrope">URL</th>
-<th class="px-8 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant font-manrope">File Path</th>
 <th class="px-8 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant font-manrope">Status</th>
 <th class="px-8 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant font-manrope text-right">Actions</th>
 </tr>
 </thead>
-<tbody id="submissionsTable" class="divide-y divide-surface-container">
+<tbody id="bumpsTable" class="divide-y divide-surface-container">
 <!-- Rows will be populated by JavaScript -->
 </tbody>
 </table>
@@ -148,14 +149,12 @@ function escapeHtml(text) {
 
 function getStatusBadge(status, error = '') {
   const statusLower = String(status || '').toLowerCase();
-
   if (statusLower === 'failed') {
     const safeError = escapeHtml(String(error || 'No error message'));
     return `<button type="button" data-error="${safeError}" class="failed-badge inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 hover:bg-red-200 dark:hover:bg-red-800">Failed</button>`;
   } else if (statusLower === 'approved') {
     return `<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">Approved</span>`;
   } else {
-    // pending, downloading, ready - all grey
     return `<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">${status.charAt(0).toUpperCase() + status.slice(1)}</span>`;
   }
 }
@@ -167,90 +166,84 @@ function truncateUrl(url, maxLength = 60) {
   return url;
 }
 
-async function loadSubmissions() {
+async function loadBumps() {
   try {
-    const response = await fetch('/admin/all');
+    const response = await fetch('/admin/bumps-data');
     if (!response.ok) {
-      alert('Failed to load submissions');
+      alert('Failed to load bumps');
       return;
     }
-    
-    const submissions = await response.json();
-    const tbody = document.getElementById('submissionsTable');
+
+    const bumps = await response.json();
+    const tbody = document.getElementById('bumpsTable');
     tbody.innerHTML = '';
-    
-    if (submissions.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="4" class="px-8 py-10 text-center text-on-surface-variant">No submissions found</td></tr>';
+
+    if (bumps.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" class="px-8 py-10 text-center text-on-surface-variant">No bumps found. Submit one with <code>/bump &lt;url&gt;</code> in chat.</td></tr>';
       return;
     }
-    
-    submissions.forEach(video => {
+
+    bumps.forEach(bump => {
       const row = document.createElement('tr');
       row.className = 'group hover:bg-surface-container-low transition-colors';
-      
-      const statusBadge = getStatusBadge(video.status, video.error);
-      const displayUrl = truncateUrl(video.url);
-      
+
+      const statusBadge = getStatusBadge(bump.status, bump.error);
+      const displayUrl = truncateUrl(bump.url || '');
+      const displayTitle = escapeHtml(bump.title || '—');
+
       row.innerHTML = `
-        <td class="px-8 py-6 text-sm font-medium text-on-surface-variant font-body">${video.id}</td>
+        <td class="px-8 py-6 text-sm font-medium text-on-surface-variant font-body">${bump.id}</td>
+        <td class="px-8 py-6 text-sm font-medium text-on-surface font-body">${displayTitle}</td>
         <td class="px-8 py-6">
-          <a class="text-sm text-primary hover:underline font-medium font-body break-all" href="${video.url}" target="_blank" title="${video.url}">${displayUrl}</a>
+          <a class="text-sm text-primary hover:underline font-medium font-body break-all" href="${escapeHtml(bump.url || '')}" target="_blank" title="${escapeHtml(bump.url || '')}">${escapeHtml(displayUrl)}</a>
         </td>
-        <td class="px-8 py-6 text-sm font-mono text-on-surface-variant">${video.file_path || '—'}</td>
         <td class="px-8 py-6">
           ${statusBadge}
         </td>
         <td class="px-8 py-6 text-right">
           <div class="flex items-center justify-end gap-3">
-            <a href="${video.url}" target="_blank" class="px-4 py-2 text-sm font-semibold text-secondary hover:bg-surface-container rounded-lg transition-all active:scale-95 flex items-center gap-2">
-              <span class="material-symbols-outlined text-lg" data-icon="visibility">visibility</span>
-              View
-            </a>
-            ${video.status === 'approved'
+            ${bump.status === 'approved'
               ? `<button disabled class="px-5 py-2 text-sm font-semibold bg-surface-container text-on-surface-variant rounded-lg flex items-center gap-2 cursor-not-allowed opacity-50">
               <span class="material-symbols-outlined text-lg">check_circle</span>
               Approved
             </button>`
-              : `<button onclick="approveVideo(${video.id})" class="px-5 py-2 text-sm font-semibold bg-primary text-on-primary rounded-lg shadow-sm hover:shadow-md transition-all active:scale-95 flex items-center gap-2">
+              : `<button onclick="approveBump(${bump.id})" class="px-5 py-2 text-sm font-semibold bg-primary text-on-primary rounded-lg shadow-sm hover:shadow-md transition-all active:scale-95 flex items-center gap-2">
               <span class="material-symbols-outlined text-lg" data-icon="check_circle">check_circle</span>
               Approve
             </button>`}
           </div>
         </td>
       `;
-      
+
       tbody.appendChild(row);
 
       const failedBadge = row.querySelector('.failed-badge');
       if (failedBadge) {
         failedBadge.addEventListener('click', () => {
-          showErrorModal(video.error || 'No error message');
+          showErrorModal(bump.error || 'No error message');
         });
       }
     });
   } catch (error) {
-    console.error('Error loading submissions:', error);
-    alert('Error loading submissions');
+    console.error('Error loading bumps:', error);
+    alert('Error loading bumps');
   }
 }
 
-async function approveVideo(videoId) {
+async function approveBump(bumpId) {
   try {
-    const response = await fetch(`/admin/approve/${videoId}`, { method: 'POST' });
+    const response = await fetch(`/admin/approve-bump/${bumpId}`, { method: 'POST' });
     if (!response.ok) {
-      alert('Failed to approve video');
+      alert('Failed to approve bump');
       return;
     }
-    
-    // Reload submissions after approval
-    loadSubmissions();
+    loadBumps();
   } catch (error) {
-    console.error('Error approving video:', error);
-    alert('Error approving video');
+    console.error('Error approving bump:', error);
+    alert('Error approving bump');
   }
 }
 
-// Error modal helpers
 function showErrorModal(errorText) {
   const modal = document.getElementById('errorModal');
   const content = document.getElementById('errorModalContent');
@@ -266,7 +259,7 @@ function closeErrorModal() {
   modal.classList.add('hidden');
 }
 
-document.addEventListener('DOMContentLoaded', loadSubmissions);
+document.addEventListener('DOMContentLoaded', loadBumps);
 </script>
 
 <div id="errorModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">

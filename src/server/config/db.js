@@ -26,6 +26,24 @@ const dbPromise = open({
   // Migrate existing DBs
   await db.run(`ALTER TABLE media ADD COLUMN title TEXT`).catch(() => {});
   await db.run(`ALTER TABLE media ADD COLUMN channel TEXT`).catch(() => {});
+  await db.run(`ALTER TABLE reset_tokens ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP`).catch(() => {});
+
+  await db.run(`
+    CREATE TABLE IF NOT EXISTS bumps (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      url TEXT,
+      file_path TEXT,
+      status TEXT DEFAULT 'pending',
+      duration INTEGER DEFAULT 180,
+      title TEXT,
+      channel TEXT,
+      error TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  // Migrate queue to support bump entries
+  await db.run(`ALTER TABLE queue ADD COLUMN bump_id INTEGER REFERENCES bumps(id) ON DELETE CASCADE`).catch(() => {});
 
   await db.run(`
     CREATE TABLE IF NOT EXISTS queue (
