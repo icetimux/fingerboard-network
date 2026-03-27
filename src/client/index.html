@@ -244,6 +244,14 @@
 <button class="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-full w-4 h-12 bg-surface-container-high border border-white/10 border-r-0 rounded-l-md flex items-center justify-center text-on-surface-variant hover:text-primary transition-all group z-50 shadow-xl shadow-black/50" id="sidebar-toggle" onclick="toggleSidebar()">
 <span class="material-symbols-outlined text-sm group-hover:scale-110 transition-transform" id="toggle-icon">chevron_right</span>
 </button>
+<!-- Welcome Banner -->
+<div id="welcome-banner" class="hidden mx-4 mt-4 rounded-xl bg-primary/10 border border-primary/20 p-4 text-sm text-on-surface/90 leading-relaxed relative shrink-0">
+<button onclick="dismissWelcome()" class="absolute top-2.5 right-2.5 text-on-surface-variant/50 hover:text-on-surface-variant transition-colors" aria-label="Dismiss">
+<span class="material-symbols-outlined text-base" style="font-size:16px">close</span>
+</button>
+<p class="text-[10px] font-bold uppercase tracking-widest text-primary mb-2">Welcome</p>
+<div id="welcome-text" class="pr-4"></div>
+</div>
 <!-- Messages -->
 <div class="flex-grow overflow-y-auto chat-scroll p-6 space-y-4" id="chat-messages">
 </div>
@@ -518,6 +526,9 @@ async function initChat() {
     messages.forEach((msg) => {
       displayChatMessage(msg.user, msg.text, false, msg.color);
     });
+    requestAnimationFrame(() => {
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    });
   });
 
   // Listen for chat messages from other users
@@ -530,9 +541,14 @@ async function initChat() {
     displayChatMessage('FBN', msg.text, true);
   });
 
-  // Welcome message — shown after chat history
+  // Welcome message — shown as dismissible banner on every load
   socket.on('chat:welcome', (msg) => {
-    displayChatMessage('FBN', msg.text, true);
+    const banner = document.getElementById('welcome-banner');
+    const textEl = document.getElementById('welcome-text');
+    if (banner && textEl) {
+      textEl.innerHTML = msg.text;
+      banner.classList.remove('hidden');
+    }
   });
 
   socket.on('state', handleState);
@@ -617,6 +633,10 @@ function displayChatMessage(username, text, isSystem, color) {
   
   // Auto-scroll to bottom
   chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function dismissWelcome() {
+  document.getElementById('welcome-banner')?.classList.add('hidden');
 }
 
 // Initialize chat when page loads

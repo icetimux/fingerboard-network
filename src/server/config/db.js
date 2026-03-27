@@ -26,7 +26,6 @@ const dbPromise = open({
   // Migrate existing DBs
   await db.run(`ALTER TABLE media ADD COLUMN title TEXT`).catch(() => {});
   await db.run(`ALTER TABLE media ADD COLUMN channel TEXT`).catch(() => {});
-  await db.run(`ALTER TABLE reset_tokens ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP`).catch(() => {});
 
   await db.run(`
     CREATE TABLE IF NOT EXISTS queue (
@@ -82,7 +81,7 @@ const dbPromise = open({
   await db.run(`
     INSERT OR IGNORE INTO settings (key, value) VALUES (
       'welcome_message',
-      '✨Welcome to Fingerboard Network!✨\nThis is a synchronized video channel. Everyone watches together in real time.\nFeel free to chat below 💬\nType /submit followed by a YouTube URL to submit a video! 🎥'
+      '<strong class="text-on-surface text-sm block mb-2">Welcome to Fingerboard Network!</strong><p class="text-on-surface/70 text-xs mb-3 leading-relaxed">A synchronized video channel — everyone watches together in real time.</p><div class="flex flex-col gap-2 text-xs text-on-surface/80"><div class="flex items-start gap-2"><span class="material-symbols-outlined text-primary shrink-0" style="font-size:14px">chat_bubble</span><span>Chat with everyone in the sidebar</span></div><div class="flex items-start gap-2"><span class="material-symbols-outlined text-primary shrink-0" style="font-size:14px">movie</span><span class="whitespace-nowrap">Submit a video: <code class="bg-primary/20 text-primary px-1 py-0.5 rounded text-[10px]">/submit [YouTube URL]</code></span></div></div>'
     )
   `);
 })();
