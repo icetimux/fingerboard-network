@@ -8,7 +8,7 @@ export async function handleCommand(parsed, socket, msg) {
     if (!isValidUrl(url)) return socket.emit('chat:system', { text: 'Invalid URL' });
     try {
       mediaService.submitVideo(url);
-      socket.emit('chat:system', { text: `Your video was submitted successfully! ✨🎥` });
+      socket.emit('chat:system', { text: `Your video has been submitted successfully and is now pending review.` });
     } catch (err) {
       socket.emit('chat:system', { text: `Failed to submit video: ${err.message}` });
     }
@@ -17,7 +17,7 @@ export async function handleCommand(parsed, socket, msg) {
     if (!isValidUrl(url)) return socket.emit('chat:system', { text: 'Invalid URL' });
     try {
       bumpService.submitBump(url);
-      socket.emit('chat:system', { text: `Your bump was submitted for review! 🎬` });
+      socket.emit('chat:system', { text: `Your bump has been submitted successfully and is now pending review.` });
     } catch (err) {
       socket.emit('chat:system', { text: `Failed to submit bump: ${err.message}` });
     }
