@@ -7,6 +7,7 @@ services:
       # Persistent data: database + downloaded videos
       - ./data:/app/data
     environment:
+      APP_ENV: prod
       PORT: "3000"
       DB_PATH: /app/data/db.sqlite
       VIDEO_DIR: /app/data/videos

@@ -3,3 +3,4 @@ database/db.sqlite
 videos/
 data/
 .env
+.env.dev
