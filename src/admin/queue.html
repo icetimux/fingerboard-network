@@ -136,9 +136,9 @@
 <span class="material-symbols-outlined">skip_next</span>
 Skip
 </button>
-<button onclick="startBumpLoop()" class="flex items-center gap-2 px-6 py-2.5 bg-surface-container-lowest text-on-surface-variant font-semibold rounded-lg shadow-sm hover:bg-surface-container-high transition-all">
-<span class="material-symbols-outlined">rebase_edit</span>
-Bump Loop
+<button id="bumpLoopBtn" onclick="toggleBumpLoop()" class="flex items-center gap-2 px-6 py-2.5 bg-surface-container-lowest text-on-surface-variant font-semibold rounded-lg shadow-sm hover:bg-surface-container-high transition-all">
+<span id="bumpLoopIcon" class="material-symbols-outlined">rebase_edit</span>
+<span id="bumpLoopLabel">Bump Loop</span>
 </button>
 <button onclick="shuffleQueue()" class="flex items-center gap-2 px-6 py-2.5 bg-surface-container-lowest text-on-surface-variant font-semibold rounded-lg shadow-sm hover:bg-surface-container-high transition-all">
 <span class="material-symbols-outlined">shuffle</span>
@@ -168,6 +168,7 @@ Clear Queue
 <table class="w-full text-left border-collapse">
 <thead>
 <tr class="bg-surface-container/50">
+<th class="px-4 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant font-manrope w-16">ID</th>
 <th class="px-8 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant font-manrope w-full">Title</th>
 <th class="px-8 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant font-manrope whitespace-nowrap">Added</th>
 <th class="px-8 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant font-manrope text-right">Actions</th>
@@ -298,6 +299,46 @@ async function shuffleQueue() {
   }
 }
 
+async function toggleBumpLoop() {
+  if (currentState?.bumpLoopMode) {
+    try {
+      await fetch('/admin/play', { method: 'POST' });
+    } catch (err) {
+      console.error('Error stopping bump loop:', err);
+    }
+    return;
+  }
+  try {
+    const res = await fetch('/admin/bump-loop', { method: 'POST' });
+    const data = await res.json();
+    if (!res.ok) {
+      alert(data.error || 'Failed to start bump loop');
+      return;
+    }
+    loadQueue();
+  } catch (err) {
+    console.error('Error starting bump loop:', err);
+  }
+}
+
+function updateBumpLoopBtn(bumpLoopMode) {
+  const btn = document.getElementById('bumpLoopBtn');
+  const icon = document.getElementById('bumpLoopIcon');
+  const label = document.getElementById('bumpLoopLabel');
+  if (!btn) return;
+  if (bumpLoopMode) {
+    icon.textContent = 'stop_circle';
+    label.textContent = 'Stop';
+    btn.classList.add('text-error');
+    btn.classList.remove('text-on-surface-variant');
+  } else {
+    icon.textContent = 'rebase_edit';
+    label.textContent = 'Bump Loop';
+    btn.classList.remove('text-error');
+    btn.classList.add('text-on-surface-variant');
+  }
+}
+
 async function startBumpLoop() {
   try {
     const res = await fetch('/admin/bump-loop', { method: 'POST' });
@@ -332,10 +373,9 @@ function highlightCurrentRow() {
   document.querySelectorAll('#queueTable tr[data-queue-id]').forEach(row => {
     const isPlaying = id !== null && Number(row.dataset.queueId) === id;
     row.classList.toggle('bg-primary/10', isPlaying);
-    row.classList.toggle('border-l-4', isPlaying);
-    row.classList.toggle('border-primary', isPlaying);
     row.classList.toggle('hover:bg-primary/15', isPlaying);
     row.classList.toggle('hover:bg-surface-container-low', !isPlaying);
+    row.style.boxShadow = isPlaying ? 'inset 4px 0 0 #3324bc' : '';
   });
 }
 
@@ -347,6 +387,7 @@ async function loadPlaybackState() {
     currentState = s;
     updatePlayPauseBtn(s.playing);
     updateNowPlaying(s);
+    updateBumpLoopBtn(s.bumpLoopMode);
     if (s.playing) startCountdown();
     highlightCurrentRow();
   } catch (err) {
@@ -375,6 +416,7 @@ async function loadQueue() {
       row.dataset.queueId = item.id;
       row.className = 'group hover:bg-surface-container-low transition-colors';
       row.innerHTML = `
+        <td class="px-4 py-6 text-sm font-medium text-on-surface-variant font-body">${item.id}</td>
         <td class="px-8 py-6">
           <div title="${escapeHtml(item.file_path || '')}" class="cursor-default">
             <div class="text-sm font-medium text-on-surface">${escapeHtml(item.title || item.file_path?.split('/').pop() || '—')}</div>
@@ -412,6 +454,7 @@ document.addEventListener('DOMContentLoaded', () => {
     currentState = s;
     updatePlayPauseBtn(s.playing);
     updateNowPlaying(s);
+    updateBumpLoopBtn(s.bumpLoopMode);
     if (s.playing) startCountdown();
     highlightCurrentRow();
   });

@@ -50,8 +50,11 @@ async function playBump(excludeId = null) {
 export const playbackController = {
   // Play — exits bump loop mode and starts the media queue
   async play() {
+    const wasInBumpLoop = state.bumpLoopMode;
     state.bumpLoopMode = false;
     state.currentBump = null;
+    // When stopping bump loop, restart queue from the top
+    if (wasInBumpLoop) state.currentVideoId = null;
     if (!state.currentVideoId) {
       const nextMedia = await getNextVideo(null);
       if (!nextMedia) {
