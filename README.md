@@ -1,106 +1,172 @@
+# Fingerboard Network
+
+A synchronized internet TV server — community members submit YouTube videos and bumps via chat, admins review and approve them, and every connected client watches in perfect sync.
+
 ---
-TODO
-- drift correction to stay more in sync
----
-
-# Synchronized Video + Chat Server
-
-This Node.js project provides:
-
-* Synchronized video playback across all clients
-* Queue management (admin controlled)
-* Chat system with `/submit` command to submit videos to queue katita and live forever and ever happy and long together ,3
-* Admin panel with basic auth
-* Public media player page
-
-## Installation
-
-1. Clone the repo:
-
-```bash
-git clone <repo-url>
-cd project
-```
-
-2. Install dependencies:
-
-```bash
-npm install express socket.io sqlite sqlite3
-```
-
-3. Set package.json to ES Modules:
-
-```json
-{
-  "type": "module"
-}
-```
-
-4. Run the server:
-
-```bash
-node server/index.js
-```
-
-5. Open browser:
-
-```
-http://localhost:3000  → Media player
-http://localhost:3000/admin  → Admin panel
-```
-
-## Architecture Diagram (ASCII)
-
-```
-+----------------------+        +----------------------+
-|      Clients         |<-----> |    Socket.IO Server  |
-|  (media player &     |        |  (initSockets)      |
-|   chat UI)           |        +----------------------+
-+----------------------+                   |
-        | Chat / State                     |
-        v                                   v
-+----------------------+        +----------------------+
-|   Chat Domain        |        |  Playback Domain     |
-| chatHandler.js       |        | state.js            |
-| commandParser.js     |        | controller.js       |
-| commandHandler.js    |        | scheduler.js        |
-+----------------------+        +----------------------+
-         |                               |
-         v                               v
-+----------------------+        +----------------------+
-|   Queue Domain       |<------ | Database (SQLite)   |
-| queueService.js      |        | videos table        |
-| queueRepository.js   |        +----------------------+
-+----------------------+
-
-Admin Panel → HTTP Requests → adminRoutes.js → Playback / Queue Domains
-```
 
 ## Features
 
-* Playback Domain: server-side playback state, scheduler auto-next video, pause/play/skip controls
-* Queue Domain: DB-backed queue, admin approvals, emits queue updates
-* Chat Domain: real-time messages, `/submit` command, system messages
-* Sockets: single source of truth, emits `state`, `queue`, `chat:*`
-* Admin Panel: HTTP Basic Auth, manage queue, control playback
-* Public Routes: serve media player and static assets
+### Synchronized Playback
+- All clients play the same video at the same position in real time
+- Server tracks wall-clock `startedAt` for accurate position across connects
+- **Drift correction**: every 5 seconds clients ping the server, measure round-trip latency, and either hard-seek (>0.5s drift) or nudge `playbackRate` (0.08–0.5s drift) to stay in sync
+
+### Queue
+- DB-backed playback queue ordered by submission ID (newest first)
+- Admin can shuffle, clear the entire queue, or remove individual entries
+- Auto-starts playback when the first video is approved if the player is idle
+
+### Bumps
+- Short interstitial clips played between videos
+- Submitted via `/bump <url>` in chat, reviewed and approved by admins
+- **Bump Loop mode**: plays random approved bumps back-to-back (no repeat until all played), exits when a video is queued
+
+### Community Submissions
+- Chat commands: `/submit <youtube-url>` and `/bump <youtube-url>`
+- Submissions enter `pending` state — **no download happens until admin approves**
+- Approval triggers download (`yt-dlp`), then moves to `approved` and enqueues automatically
+- Status flow: `pending` → `downloading` → `approved` (or `failed`)
+- Removing a submission or bump also deletes the video file from disk
+
+### Admin Panel
+- HTTP Basic Auth protected
+- **Submissions page**: filter by status (All / Approved / Downloading / Failed), approve, remove, Remove All
+- **Queue page**: view queue, remove entries, shuffle, clear queue
+- **Bumps page**: approve, remove bumps; trigger Bump Loop
+- Live playback controls: Play, Pause, Skip
+
+### Chat
+- Real-time chat via Socket.IO
+- `/submit` and `/bump` commands with URL validation and deduplication
+- System messages for submission confirmations and errors
+- Persistent chat history (last 50 messages)
+- Per-user color assignment
+
+### Auth
+- User accounts with sessions (`express-session`)
+- Password hashing with `bcryptjs`
+- Password reset flow
+
+---
+
+## Architecture
+
+```
+  Clients (browser)
+  ├── index.html       Media player + chat UI
+  └── admin/*.html     Admin panel pages
+        │
+        │  WebSocket (Socket.IO)          HTTP (Express)
+        │  state, queue, chat:*           adminRoutes, publicRoutes
+        ▼                                        │
+  ┌─────────────────────────────────────────────┤
+  │              Socket.IO Server               │
+  │  socketHandler.js                           │
+  │  sync:ping ↔ sync:pong (drift correction)   │
+  └────────────┬────────────────────────────────┘
+               │
+       ┌───────┴────────┐
+       │                │
+  ┌────▼────┐     ┌─────▼──────┐
+  │Playback │     │    Chat    │
+  │ Domain  │     │   Domain   │
+  │         │     │            │
+  │state.js │     │chatHandler │
+  │control  │     │commandHand-│
+  │ler.js   │     │  ler.js    │
+  │schedul  │     │commandPars-│
+  │ er.js   │     │  er.js     │
+  └────┬────┘     └─────┬──────┘
+       │                │
+  ┌────▼────────────────▼──────┐
+  │           Domains          │
+  ├────────────────────────────┤
+  │  Queue   │ Media  │ Bumps  │
+  │  Service │Service │Service │
+  │  Repo    │ Repo   │ Repo   │
+  └────────────────────────────┘
+               │
+  ┌────────────▼───────────────┐
+  │       SQLite Database      │
+  │  media · queue · bumps     │
+  │  messages · users          │
+  └────────────────────────────┘
+               │
+  ┌────────────▼───────────────┐
+  │      yt-dlp (binary)       │
+  │  Downloads on approval     │
+  │  videos/ · videos/bumps/   │
+  └────────────────────────────┘
+```
+
+---
+
+## Setup
+
+### Prerequisites
+- Node.js 18+
+- `yt-dlp` binary at `bin/yt-dlp` (or on `PATH`)
+
+### Install
+
+```bash
+git clone <repo-url>
+cd fingerboard-network
+npm install
+```
+
+### Configure
+
+Create a `.env` file:
+
+```env
+PORT=3000
+SESSION_SECRET=your-secret-here
+ADMIN_USER=admin
+ADMIN_PASS=yourpassword
+```
+
+### Run
+
+```bash
+# Development (auto-restart on changes)
+npm run dev
+
+# Production
+npm start
+```
+
+### Access
+
+| URL | Description |
+|-----|-------------|
+| `http://localhost:3000` | Public media player + chat |
+| `http://localhost:3000/admin` | Admin panel (Basic Auth) |
+| `http://localhost:3000/admin/submissions` | Review submissions |
+| `http://localhost:3000/admin/queue` | Manage playback queue |
+| `http://localhost:3000/admin/bumps` | Manage bumps |
+
+---
+
+## Chat Commands
+
+| Command | Description |
+|---------|-------------|
+| `/submit <url>` | Submit a YouTube video for admin review |
+| `/bump <url>` | Submit a bump clip for admin review |
+
+Videos and bumps remain `pending` until an admin approves them. Approval triggers the download.
+
+---
 
 ## Dependencies
 
-* `express` → Web framework
-* `socket.io` → WebSocket communication
-* `sqlite3` → Database
-
-Install with:
-
-```bash
-npm install express socket.io sqlite3
-```
-
-## Run
-
-```bash
-node server/index.js
-```
-
-Open browser at `http://localhost:3000` to see the media player.
+| Package | Purpose |
+|---------|---------|
+| `express` | Web framework & routing |
+| `socket.io` | Real-time WebSocket communication |
+| `sqlite` / `sqlite3` | Database |
+| `p-queue` | Concurrency-limited download queue |
+| `bcryptjs` | Password hashing |
+| `express-session` | User sessions |
+| `nodemon` | Dev auto-restart |
