@@ -1,8 +1,9 @@
 import express from 'express';
 import path from 'path';
-import { unlink } from 'fs/promises';
+import { unlink, statfs } from 'fs/promises';
 import { fileURLToPath } from 'url';
 import { basicAuth } from '../middleware/basicAuth.js';
+import { ioInstance } from '../sockets/socketHandler.js';
 import { playbackController, buildEnrichedState } from '../domains/playback/controller.js';
 import { getQueue, getQueueWithMedia } from '../domains/queue/queueService.js';
 import { queueRepository } from '../domains/queue/queueRepository.js';
@@ -31,6 +32,37 @@ router.get('/queue', basicAuth, async (req, res) => {
 
 router.get('/bumps', basicAuth, async (req, res) => {
   res.sendFile(path.join(__dirname, '../../admin/bumps.html'));
+});
+
+router.get('/stats', basicAuth, async (req, res) => {
+  res.sendFile(path.join(__dirname, '../../admin/stats.html'));
+});
+
+// Stats data
+router.get('/stats-data', basicAuth, async (req, res) => {
+  try {
+    const db = await dbPromise;
+    const [mediaRow, queueRow, bumpsRow, usersRow, diskInfo] = await Promise.all([
+      db.get('SELECT COUNT(*) as count FROM media'),
+      db.get('SELECT COUNT(*) as count FROM queue'),
+      db.get('SELECT COUNT(*) as count FROM bumps'),
+      db.get('SELECT COUNT(*) as count FROM users'),
+      statfs('.').catch(() => null),
+    ]);
+    const connectedClients = ioInstance ? ioInstance.sockets.sockets.size : 0;
+    res.json({
+      connectedClients,
+      users: usersRow.count,
+      submissions: mediaRow.count,
+      queueCount: queueRow.count,
+      bumps: bumpsRow.count,
+      diskFree: diskInfo ? diskInfo.bfree * diskInfo.bsize : null,
+      diskTotal: diskInfo ? diskInfo.blocks * diskInfo.bsize : null,
+    });
+  } catch (error) {
+    console.error('Error fetching stats:', error);
+    res.status(500).json({ error: 'Failed to fetch stats' });
+  }
 });
 
 // Get all media

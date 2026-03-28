@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Stats</title>
+<script src="/socket.io/socket.io.js"></script>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-secondary-fixed-variant": "#3e446b",
+              "surface": "#f8f9ff",
+              "secondary-fixed-dim": "#bec4f2",
+              "surface-dim": "#ccdbf3",
+              "tertiary-fixed-dim": "#ffb784",
+              "on-surface-variant": "#454652",
+              "outline-variant": "#c5c5d4",
+              "primary": "#3324bc",
+              "on-primary": "#ffffff",
+              "error": "#ba1a1a",
+              "surface-container-highest": "#d5e3fc",
+              "on-tertiary": "#ffffff",
+              "surface-container-low": "#eff4ff",
+              "on-secondary-container": "#51577f",
+              "secondary-fixed": "#dee0ff",
+              "surface-container-high": "#dce9ff",
+              "background": "#f8f9ff",
+              "tertiary": "#6c3400",
+              "on-surface": "#0d1c2e",
+              "on-primary-fixed": "#100069",
+              "surface-container": "#e6eeff",
+              "on-surface-variant-dim": "#757684",
+              "on-primary-container": "#d1cdff",
+              "inverse-primary": "#c3c0ff",
+              "secondary": "#565c84",
+              "inverse-surface": "#233144",
+              "on-tertiary-fixed-variant": "#713700",
+              "inverse-on-surface": "#eaf1ff",
+              "on-tertiary-fixed": "#301400",
+              "surface-variant": "#d5e3fc",
+              "outline": "#757684",
+              "on-secondary-fixed": "#12183d",
+              "on-secondary": "#ffffff",
+              "on-primary-fixed-variant": "#372abf",
+              "surface-tint": "#5148d7",
+              "on-error": "#ffffff",
+              "surface-container-lowest": "#ffffff",
+              "on-error-container": "#93000a",
+              "tertiary-fixed": "#ffdcc6",
+              "primary-container": "#4c43d3",
+              "surface-bright": "#f8f9ff",
+              "error-container": "#ffdad6",
+              "primary-fixed-dim": "#c3c0ff",
+              "secondary-container": "#c9cffd",
+              "on-background": "#0d1c2e",
+              "tertiary-container": "#8f4700",
+              "on-tertiary-container": "#ffc7a2",
+              "primary-fixed": "#e3dfff"
+            },
+            fontFamily: {
+              "headline": ["Manrope"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3, .font-manrope { font-family: 'Manrope', sans-serif; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface antialiased min-h-screen">
+<!-- SideNavBar Shell -->
+<aside class="h-screen w-64 fixed left-0 top-0 border-r border-slate-200 bg-white dark:bg-slate-900 flex flex-col p-6 z-20">
+<div class="mb-10">
+<h2 class="text-xl font-bold tracking-tight text-on-surface font-manrope">Admin Panel</h2>
+</div>
+<nav class="flex-1 space-y-2">
+<a class="flex items-center gap-3 p-3 text-on-surface-variant hover:bg-surface-container transition-all duration-200 ease-in-out rounded-lg" href="submissions">
+<span class="material-symbols-outlined">description</span>
+<span class="font-manrope text-sm font-medium">Submissions</span>
+</a>
+<a class="flex items-center gap-3 p-3 text-on-surface-variant hover:bg-surface-container transition-all duration-200 ease-in-out rounded-lg" href="queue">
+<span class="material-symbols-outlined">hourglass_empty</span>
+<span class="font-manrope text-sm font-medium">Queue</span>
+</a>
+<a class="flex items-center gap-3 p-3 text-on-surface-variant hover:bg-surface-container transition-all duration-200 ease-in-out rounded-lg" href="bumps">
+<span class="material-symbols-outlined">movie</span>
+<span class="font-manrope text-sm font-medium">Bumps</span>
+</a>
+<a class="flex items-center gap-3 p-3 bg-primary/10 text-primary font-semibold rounded-lg transition-all duration-200 ease-in-out" href="stats">
+<span class="material-symbols-outlined">bar_chart</span>
+<span class="font-manrope text-sm font-medium">Stats</span>
+</a>
+</nav>
+</aside>
+<!-- TopNavBar Shell -->
+<header class="fixed top-0 right-0 w-[calc(100%-16rem)] z-10 bg-surface/80 backdrop-blur-md flex justify-between items-center px-12 py-4 h-16 border-b border-surface-container">
+<div class="flex items-center flex-1"></div>
+</header>
+<!-- Main Content Canvas -->
+<main class="pt-24 pl-64 min-h-screen">
+<div class="px-12 max-w-7xl mx-auto">
+<!-- Page Header -->
+<div class="mb-12 flex items-center justify-between">
+<h1 class="text-5xl font-extrabold tracking-tight text-on-surface font-manrope">Stats</h1>
+<button onclick="loadStats()" class="flex items-center gap-2 px-5 py-2.5 bg-surface-container-lowest text-on-surface-variant font-semibold rounded-lg shadow-sm hover:bg-surface-container-high transition-all text-sm">
+<span class="material-symbols-outlined text-base">refresh</span>
+Refresh
+</button>
+</div>
+<!-- Stat Cards -->
+<div id="statsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+  <!-- Cards injected by JS -->
+</div>
+</div>
+</main>
+
+<script>
+function fmt(n) {
+  if (n == null) return '—';
+  return n.toLocaleString();
+}
+
+function fmtBytes(bytes) {
+  if (bytes == null) return '—';
+  if (bytes >= 1e12) return (bytes / 1e12).toFixed(1) + ' TB';
+  if (bytes >= 1e9)  return (bytes / 1e9).toFixed(1) + ' GB';
+  if (bytes >= 1e6)  return (bytes / 1e6).toFixed(1) + ' MB';
+  return (bytes / 1e3).toFixed(1) + ' KB';
+}
+
+function card(icon, label, value, sub) {
+  return `
+    <div class="bg-surface-container-lowest rounded-xl shadow-sm border border-surface-container p-8 flex flex-col gap-4">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-bold uppercase tracking-widest text-on-surface-variant font-manrope">${label}</span>
+        <span class="material-symbols-outlined text-primary" style="font-size:28px;font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24">${icon}</span>
+      </div>
+      <div class="text-5xl font-extrabold font-manrope text-on-surface tabular-nums">${value}</div>
+      ${sub ? `<div class="text-xs text-on-surface-variant">${sub}</div>` : ''}
+    </div>
+  `;
+}
+
+async function loadStats() {
+  const grid = document.getElementById('statsGrid');
+  grid.innerHTML = '<div class="col-span-full text-on-surface-variant text-sm">Loading…</div>';
+  try {
+    const res = await fetch('/admin/stats-data');
+    if (!res.ok) throw new Error(await res.text());
+    const d = await res.json();
+    const diskSub = d.diskTotal ? `${fmtBytes(d.diskFree)} free of ${fmtBytes(d.diskTotal)}` : null;
+    const diskPct = (d.diskTotal && d.diskFree != null)
+      ? Math.round((1 - d.diskFree / d.diskTotal) * 100)
+      : null;
+    const diskVal = diskPct != null ? `${100 - diskPct}%` : '—';
+    grid.innerHTML = [
+      card('wifi',              'Connected Clients', fmt(d.connectedClients)),
+      card('manage_accounts',   'Registered Users',  fmt(d.users)),
+      card('description',       'Total Submissions',  fmt(d.submissions)),
+      card('queue_play_next',   'In Queue',           fmt(d.queueCount)),
+      card('theaters',          'Bumps',              fmt(d.bumps)),
+      card('hard_drive',        'Disk Free',          diskVal, diskSub),
+    ].join('');
+  } catch (e) {
+    grid.innerHTML = `<div class="col-span-full text-error text-sm">Failed to load stats: ${e.message}</div>`;
+  }
+}
+
+loadStats();
+</script>
+</body>
+</html>
