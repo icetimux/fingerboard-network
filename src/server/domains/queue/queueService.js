@@ -25,10 +25,6 @@ export async function getNextVideo(currentId) {
   return queueRepository.getNext(currentId);
 }
 
-export async function getVideoById(id) {
-  return queueRepository.getVideoById(id);
-}
-
 export async function getRandomApprovedBump(excludeId = null) {
   return bumpRepository.getRandomApproved(excludeId);
 }

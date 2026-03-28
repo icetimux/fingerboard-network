@@ -1,10 +1,11 @@
 import express from 'express';
 import path from 'path';
-import fs from 'fs';
+import { unlink } from 'fs/promises';
 import { fileURLToPath } from 'url';
 import { basicAuth } from '../middleware/basicAuth.js';
 import { playbackController, buildEnrichedState } from '../domains/playback/controller.js';
 import { getQueue, getQueueWithMedia } from '../domains/queue/queueService.js';
+import { queueRepository } from '../domains/queue/queueRepository.js';
 import { approve } from '../domains/media/mediaService.js';
 import { mediaRepository } from '../domains/media/mediaRepository.js';
 import { approveBump } from '../domains/bumps/bumpService.js';
@@ -65,11 +66,9 @@ router.delete('/submissions', basicAuth, async (req, res) => {
   try {
     const db = await dbPromise;
     const all = await db.all('SELECT file_path FROM media WHERE file_path IS NOT NULL');
-    for (const row of all) {
-      fs.unlink(row.file_path, (err) => {
-        if (err && err.code !== 'ENOENT') console.error('Error deleting file:', err);
-      });
-    }
+    await Promise.all(all.map(row => unlink(row.file_path).catch(err => {
+      if (err.code !== 'ENOENT') console.error('Error deleting file:', err);
+    })));
     await db.run('DELETE FROM media');
     await db.run("DELETE FROM sqlite_sequence WHERE name='media'");
     res.json({ success: true });
@@ -86,8 +85,8 @@ router.delete('/submissions/:id', basicAuth, async (req, res) => {
     if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid id' });
     const record = await mediaRepository.getById(id);
     if (record?.file_path) {
-      fs.unlink(record.file_path, (err) => {
-        if (err && err.code !== 'ENOENT') console.error('Error deleting file:', err);
+      await unlink(record.file_path).catch(err => {
+        if (err.code !== 'ENOENT') console.error('Error deleting file:', err);
       });
     }
     await mediaRepository.deleteById(id);
@@ -123,9 +122,9 @@ router.post('/play', basicAuth, async (req, res) => {
 });
 
 // Pause video
-router.post('/pause', basicAuth, (req, res) => {
+router.post('/pause', basicAuth, async (req, res) => {
   try {
-    playbackController.pause();
+    await playbackController.pause();
     res.json({ success: true });
   } catch (error) {
     console.error('Error pausing video:', error);
@@ -202,8 +201,7 @@ router.delete('/queue/:id', basicAuth, async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
     if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid id' });
-    const db = await dbPromise;
-    await db.run('DELETE FROM queue WHERE id=?', [id]);
+    await queueRepository.deleteById(id);
     res.json({ success: true });
   } catch (error) {
     console.error('Error deleting queue entry:', error);
@@ -218,8 +216,8 @@ router.delete('/bumps/:id', basicAuth, async (req, res) => {
     if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid id' });
     const record = await bumpRepository.getById(id);
     if (record?.file_path) {
-      fs.unlink(record.file_path, (err) => {
-        if (err && err.code !== 'ENOENT') console.error('Error deleting bump file:', err);
+      await unlink(record.file_path).catch(err => {
+        if (err.code !== 'ENOENT') console.error('Error deleting bump file:', err);
       });
     }
     await bumpRepository.deleteById(id);
@@ -246,7 +244,7 @@ router.post('/approve-bump/:id', basicAuth, async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
     if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid id' });
-    await approveBump(id);
+    approveBump(id);
     res.json({ success: true });
   } catch (error) {
     console.error('Error approving bump:', error);

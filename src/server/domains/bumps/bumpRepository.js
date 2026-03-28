@@ -25,17 +25,12 @@ export const bumpRepository = {
     await db.run("UPDATE bumps SET status='failed', error=? WHERE id=?", [error, id]);
   },
 
-  async setReady(id, filePath, duration, title, channel) {
+  async setApproved(id, filePath, duration, title, channel) {
     const db = await dbPromise;
     await db.run(
-      "UPDATE bumps SET status='ready', file_path=?, duration=?, title=?, channel=? WHERE id=?",
+      "UPDATE bumps SET status='approved', file_path=?, duration=?, title=?, channel=? WHERE id=?",
       [filePath, duration ?? 180, title ?? null, channel ?? null, id]
     );
-  },
-
-  async setApproved(id) {
-    const db = await dbPromise;
-    await db.run("UPDATE bumps SET status='approved' WHERE id=?", [id]);
   },
 
   async getAll() {

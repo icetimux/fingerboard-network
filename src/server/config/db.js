@@ -23,10 +23,9 @@ const dbPromise = open({
     )
   `);
 
-  // Migrate existing DBs
+  // Migrate existing DBs: add columns that may be missing on older installs
   await db.run(`ALTER TABLE media ADD COLUMN title TEXT`).catch(() => {});
   await db.run(`ALTER TABLE media ADD COLUMN channel TEXT`).catch(() => {});
-  await db.run(`ALTER TABLE reset_tokens ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP`).catch(() => {});
 
   await db.run(`
     CREATE TABLE IF NOT EXISTS bumps (
@@ -42,9 +41,6 @@ const dbPromise = open({
     )
   `);
 
-  // Migrate queue to support bump entries
-  await db.run(`ALTER TABLE queue ADD COLUMN bump_id INTEGER REFERENCES bumps(id) ON DELETE CASCADE`).catch(() => {});
-
   await db.run(`
     CREATE TABLE IF NOT EXISTS queue (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -54,6 +50,9 @@ const dbPromise = open({
       FOREIGN KEY (media_id) REFERENCES media(id) ON DELETE CASCADE
     )
   `);
+
+  // Migrate existing DBs: add bump_id column if missing
+  await db.run(`ALTER TABLE queue ADD COLUMN bump_id INTEGER REFERENCES bumps(id) ON DELETE CASCADE`).catch(() => {});
 
   await db.run(`
     CREATE TABLE IF NOT EXISTS messages (

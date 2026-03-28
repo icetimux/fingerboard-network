@@ -20,20 +20,12 @@ async function processBumpApproval(bumpId) {
   const bump = await bumpRepository.getById(bumpId);
   if (!bump) return;
 
-  // If already downloaded (e.g. legacy 'ready' entry), skip re-downloading
-  if (bump.file_path) {
-    await bumpRepository.setApproved(bumpId);
-    ioInstance?.emit('bump:status', { bumpId, status: 'approved' });
-    return;
-  }
-
   await bumpRepository.setDownloading(bumpId);
   ioInstance?.emit('bump:status', { bumpId, status: 'downloading' });
 
   try {
     const { filePath, duration, title, channel } = await downloadVideo(bump.url, BUMP_DIR, bumpId);
-    await bumpRepository.setReady(bumpId, filePath, duration, title, channel);
-    await bumpRepository.setApproved(bumpId);
+    await bumpRepository.setApproved(bumpId, filePath, duration, title, channel);
     ioInstance?.emit('bump:status', { bumpId, status: 'approved', filePath });
   } catch (err) {
     const errorMessage = String(err?.message || 'Unknown error');

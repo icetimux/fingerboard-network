@@ -51,14 +51,3 @@ export async function consumeResetToken(tokenId) {
   const db = await dbPromise;
   await db.run('UPDATE reset_tokens SET used = 1 WHERE id = ?', [tokenId]);
 }
-
-export async function getAllResetTokens() {
-  const db = await dbPromise;
-  return db.all(
-    `SELECT rt.id, rt.token, rt.expires_at, rt.used, rt.created_at, u.username
-     FROM reset_tokens rt
-     JOIN users u ON u.id = rt.user_id
-     ORDER BY rt.id DESC
-     LIMIT 100`,
-  );
-}

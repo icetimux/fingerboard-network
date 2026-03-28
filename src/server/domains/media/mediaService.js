@@ -27,24 +27,12 @@ async function processApproval(videoId) {
   const video = await mediaRepository.getById(videoId);
   if (!video) return;
 
-  // If already downloaded (e.g. legacy 'ready' entry), skip re-downloading
-  if (video.file_path) {
-    await mediaRepository.setApproved(videoId);
-    await enqueue(videoId);
-    ioInstance?.emit('media:status', { videoId, status: 'approved' });
-    if (!playbackState.playing && !playbackState.currentVideoId) {
-      await playbackController.play();
-    }
-    return;
-  }
-
   await mediaRepository.setDownloading(videoId);
   ioInstance?.emit('media:status', { videoId, status: 'downloading' });
 
   try {
     const { filePath, duration, title, channel } = await downloadVideo(video.url, VIDEO_DIR, videoId);
-    await mediaRepository.setReady(videoId, filePath, duration, title, channel);
-    await mediaRepository.setApproved(videoId);
+    await mediaRepository.setApproved(videoId, filePath, duration, title, channel);
     await enqueue(videoId);
     ioInstance?.emit('media:status', { videoId, status: 'approved', filePath });
     if (!playbackState.playing && !playbackState.currentVideoId) {
