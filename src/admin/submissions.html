@@ -137,8 +137,8 @@
 <table class="w-full text-left border-collapse">
 <thead>
 <tr class="bg-surface-container/50">
-<th class="px-8 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant font-manrope">ID</th>
-<th class="px-8 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant font-manrope">File Path</th>
+<th class="px-4 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant font-manrope w-16">ID</th>
+<th class="px-8 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant font-manrope">Title</th>
 <th class="px-8 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant font-manrope">Status</th>
 <th class="px-8 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant font-manrope w-36">Created</th>
 <th class="px-8 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant font-manrope text-right">Actions</th>
@@ -250,8 +250,13 @@ function renderRow(video, tbody) {
     const statusBadge = getStatusBadge(video.status, video.error);
 
     row.innerHTML = `
-        <td class="px-8 py-6 text-sm font-medium text-on-surface-variant font-body">${video.id}</td>
-        <td class="px-8 py-6 text-sm font-mono text-on-surface-variant max-w-xs truncate" title="${video.file_path || ''}">${video.file_path || '—'}</td>
+        <td class="px-4 py-6 text-sm font-medium text-on-surface-variant font-body">${video.id}</td>
+        <td class="px-8 py-6">
+          <div title="${escapeHtml(video.file_path || '')}" class="cursor-default">
+            <div class="text-sm font-medium text-on-surface">${escapeHtml(video.title || video.file_path?.split('/').pop() || '—')}</div>
+            ${video.channel ? `<div class="text-xs text-on-surface-variant mt-0.5">${escapeHtml(video.channel)}</div>` : ''}
+          </div>
+        </td>
         <td class="px-8 py-6">
           ${statusBadge}
         </td>

@@ -158,7 +158,8 @@ Clear Queue
   <div class="flex items-center gap-3">
     <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
     <span class="text-xs font-bold uppercase tracking-widest text-primary">Now Playing</span>
-    <span id="now-playing-path" class="text-sm font-mono text-on-surface-variant truncate max-w-xs"></span>
+    <span id="now-playing-title" class="text-sm font-semibold text-on-surface truncate max-w-xs"></span>
+    <span id="now-playing-channel" class="text-xs text-on-surface-variant truncate max-w-xs"></span>
   </div>
   <span id="now-playing-countdown" class="text-2xl font-bold font-mono text-on-surface tabular-nums">--:--</span>
 </div>
@@ -167,11 +168,9 @@ Clear Queue
 <table class="w-full text-left border-collapse">
 <thead>
 <tr class="bg-surface-container/50">
-<th class="px-8 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant font-manrope">Queue ID</th>
-<th class="px-8 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant font-manrope">Media ID</th>
-<th class="px-8 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant font-manrope">File Path</th>
-<th class="px-8 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant font-manrope w-36">Added</th>
-<th class="px-8 py-5"></th>
+<th class="px-8 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant font-manrope w-full">Title</th>
+<th class="px-8 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant font-manrope whitespace-nowrap">Added</th>
+<th class="px-8 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant font-manrope text-right">Actions</th>
 </tr>
 </thead>
 <tbody id="queueTable" class="divide-y divide-surface-container">
@@ -184,6 +183,12 @@ Clear Queue
 <br>
 <br>
 <script>
+function escapeHtml(text) {
+  return String(text ?? '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+}
+
 let isPlaying = false;
 let currentState = null;
 let countdownInterval = null;
@@ -207,11 +212,13 @@ function startCountdown() {
 
 function updateNowPlaying(s) {
   const card = document.getElementById('now-playing-card');
-  const path = document.getElementById('now-playing-path');
+  const titleEl = document.getElementById('now-playing-title');
+  const channelEl = document.getElementById('now-playing-channel');
   const countdown = document.getElementById('now-playing-countdown');
   if (s.playing && s.filePath) {
     card.classList.remove('hidden');
-    path.textContent = s.filePath.split('/').pop();
+    titleEl.textContent = s.title || s.filePath.split('/').pop();
+    channelEl.textContent = s.channel || '';
     const elapsed = (Date.now() - s.startedAt) / 1000;
     const remaining = (s.duration ?? 0) - elapsed;
     countdown.textContent = fmtTime(remaining);
@@ -368,10 +375,13 @@ async function loadQueue() {
       row.dataset.queueId = item.id;
       row.className = 'group hover:bg-surface-container-low transition-colors';
       row.innerHTML = `
-        <td class="px-8 py-6 text-sm font-medium text-on-surface-variant font-body">${item.id}</td>
-        <td class="px-8 py-6 text-sm font-medium text-on-surface-variant font-body">${item.media_id}</td>
-        <td class="px-8 py-6 text-sm font-mono text-on-surface-variant">${item.file_path || '—'}</td>
-        <td class="px-8 py-6 text-sm text-on-surface-variant whitespace-nowrap">${formatDate(item.added_at)}</td>
+        <td class="px-8 py-6">
+          <div title="${escapeHtml(item.file_path || '')}" class="cursor-default">
+            <div class="text-sm font-medium text-on-surface">${escapeHtml(item.title || item.file_path?.split('/').pop() || '—')}</div>
+            ${item.channel ? `<div class="text-xs text-on-surface-variant mt-0.5">${escapeHtml(item.channel)}</div>` : ''}
+          </div>
+        </td>
+        <td class="px-8 py-6 text-sm text-on-surface-variant whitespace-nowrap w-px">${formatDate(item.added_at)}</td>
         <td class="px-4 py-6 text-right">
           <div class="flex items-center justify-end gap-2">
             <a href="${item.url}" target="_blank" class="px-3 py-1.5 text-xs font-semibold text-secondary hover:bg-surface-container rounded-lg transition-all active:scale-95 flex items-center gap-1.5">

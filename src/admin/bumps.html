@@ -131,7 +131,7 @@
 <table class="w-full text-left border-collapse">
 <thead>
 <tr class="bg-surface-container/50">
-<th class="px-8 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant font-manrope">ID</th>
+<th class="px-4 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant font-manrope w-16">ID</th>
 <th class="px-8 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant font-manrope">Title</th>
 <th class="px-8 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant font-manrope">Status</th>
 <th class="px-8 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant font-manrope w-36">Created</th>
@@ -211,8 +211,13 @@ async function loadBumps() {
       const displayTitle = escapeHtml(bump.title || '—');
 
       row.innerHTML = `
-        <td class="px-8 py-6 text-sm font-medium text-on-surface-variant font-body">${bump.id}</td>
-        <td class="px-8 py-6 text-sm font-medium text-on-surface font-body">${displayTitle}</td>
+        <td class="px-4 py-6 text-sm font-medium text-on-surface-variant font-body">${bump.id}</td>
+        <td class="px-8 py-6">
+          <div title="${escapeHtml(bump.file_path || '')}" class="cursor-default">
+            <div class="text-sm font-medium text-on-surface">${escapeHtml(bump.title || bump.file_path?.split('/').pop() || '—')}</div>
+            ${bump.channel ? `<div class="text-xs text-on-surface-variant mt-0.5">${escapeHtml(bump.channel)}</div>` : ''}
+          </div>
+        </td>
         <td class="px-8 py-6">
           ${statusBadge}
         </td>
