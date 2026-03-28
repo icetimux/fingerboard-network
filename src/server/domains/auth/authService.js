@@ -11,7 +11,12 @@ import {
   consumeResetToken,
 } from './authRepository.js';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+let _resend = null;
+function getResend() {
+  if (!process.env.RESEND_API_KEY) throw new Error('RESEND_API_KEY is not set. Password reset emails are unavailable.');
+  if (!_resend) _resend = new Resend(process.env.RESEND_API_KEY);
+  return _resend;
+}
 const FROM_EMAIL = process.env.RESEND_FROM || 'noreply@fingerboard.network';
 const SITE_URL = process.env.SITE_URL || 'http://localhost:3000';
 
@@ -47,7 +52,7 @@ export async function requestPasswordReset(username, email) {
     throw new Error('No account found with that username and email combination.');
   }
   const token = await createResetToken(user.id);
-  const { error } = await resend.emails.send({
+  const { error } = await getResend().emails.send({
     from: FROM_EMAIL,
     to: user.email,
     subject: 'Fingerboard Network — Password Reset',
