@@ -1,5 +1,6 @@
 import { handleChat } from '../domains/chat/chatHandler.js';
 import { buildEnrichedState } from '../domains/playback/controller.js';
+import { state as playbackState } from '../domains/playback/state.js';
 import { getQueue } from '../domains/queue/queueService.js';
 import dbPromise from '../config/db.js';
 
@@ -60,5 +61,16 @@ export function initSockets(io) {
     });
 
     socket.on('chat:message', msg => handleChat(msg, socket));
+
+    // Sync ping — client measures RTT and corrects drift
+    socket.on('sync:ping', ({ t }) => {
+      socket.emit('sync:pong', {
+        t,
+        serverTime: Date.now(),
+        startedAt: playbackState.startedAt,
+        playing: playbackState.playing,
+        pausedAt: playbackState.pausedAt,
+      });
+    });
   });
 }

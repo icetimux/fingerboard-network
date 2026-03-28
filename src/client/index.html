@@ -553,6 +553,42 @@ async function initChat() {
 
   socket.on('state', handleState);
 
+  // ---- Drift correction ----
+  // Every 5s, ping the server to measure RTT, then compare expected vs actual
+  // video position. Hard-seek if drift > 0.5s; nudge playbackRate for smaller drift.
+  let lastServerState = null;
+  const DRIFT_HARD_SEEK = 0.5;   // seconds — hard seek threshold
+  const DRIFT_NUDGE    = 0.08;   // seconds — start nudging playbackRate
+  const NUDGE_RATE     = 0.05;   // playbackRate offset when nudging
+
+  socket.on('sync:pong', ({ t, serverTime, startedAt, playing, pausedAt }) => {
+    if (!video || !playing || !startedAt) {
+      if (video) video.playbackRate = 1.0;
+      return;
+    }
+    const rtt = Date.now() - t;
+    const adjustedNow = serverTime + rtt / 2;
+    const expected = (adjustedNow - startedAt) / 1000;
+    const actual = video.currentTime;
+    const drift = expected - actual; // positive = we're behind
+
+    if (Math.abs(drift) > DRIFT_HARD_SEEK) {
+      video.currentTime = Math.max(0, expected);
+      video.playbackRate = 1.0;
+    } else if (Math.abs(drift) > DRIFT_NUDGE) {
+      video.playbackRate = drift > 0 ? 1.0 + NUDGE_RATE : 1.0 - NUDGE_RATE;
+    } else {
+      video.playbackRate = 1.0;
+    }
+  });
+
+  setInterval(() => {
+    if (video && !video.paused && !video.ended) {
+      socket.emit('sync:ping', { t: Date.now() });
+    }
+  }, 5000);
+  // ---- End drift correction ----
+
   // Handle Enter key in input
   const chatInput = document.getElementById('chat-input');
   const commandBadge = document.getElementById('command-badge');
