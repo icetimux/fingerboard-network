@@ -1,7 +1,6 @@
 ---
 TODO
 - drift correction to stay more in sync
-- only makt it download the video once its approved. same for bumps
 ---
 
 # Synchronized Video + Chat Server

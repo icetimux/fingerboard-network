@@ -138,6 +138,10 @@ Bump Loop
 <span class="material-symbols-outlined">shuffle</span>
 Shuffle
 </button>
+<button onclick="clearQueue()" class="flex items-center gap-2 px-6 py-2.5 bg-surface-container-lowest text-error font-semibold rounded-lg shadow-sm hover:bg-red-50 transition-all">
+<span class="material-symbols-outlined">delete_sweep</span>
+Clear Queue
+</button>
 </div>
 <div class="flex items-center gap-4 text-xs font-bold text-on-surface-variant uppercase tracking-widest px-4">
 <span id="liveIndicator" class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-gray-400"></span> Idle</span>
@@ -255,6 +259,18 @@ async function deleteQueueEntry(id, btn) {
   } catch (err) {
     console.error('Error deleting queue entry:', err);
     btn.disabled = false;
+  }
+}
+
+async function clearQueue() {
+  if (!confirm('Clear the entire queue? This cannot be undone.')) return;
+  try {
+    const res = await fetch('/admin/clear-queue', { method: 'POST' });
+    const data = await res.json();
+    if (!res.ok) { alert(data.error || 'Failed to clear queue'); return; }
+    loadQueue();
+  } catch (err) {
+    console.error('Error clearing queue:', err);
   }
 }
 

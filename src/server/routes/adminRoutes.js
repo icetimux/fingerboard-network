@@ -60,6 +60,25 @@ router.get('/playback-state', basicAuth, async (req, res) => {
   res.json(await buildEnrichedState());
 });
 
+// Delete all submissions (and their files)
+router.delete('/submissions', basicAuth, async (req, res) => {
+  try {
+    const db = await dbPromise;
+    const all = await db.all('SELECT file_path FROM media WHERE file_path IS NOT NULL');
+    for (const row of all) {
+      fs.unlink(row.file_path, (err) => {
+        if (err && err.code !== 'ENOENT') console.error('Error deleting file:', err);
+      });
+    }
+    await db.run('DELETE FROM media');
+    await db.run("DELETE FROM sqlite_sequence WHERE name='media'");
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting all submissions:', error);
+    res.status(500).json({ error: 'Failed to delete all submissions' });
+  }
+});
+
 // Delete submission
 router.delete('/submissions/:id', basicAuth, async (req, res) => {
   try {
@@ -150,6 +169,19 @@ router.post('/shuffle-queue', basicAuth, async (req, res) => {
   } catch (error) {
     console.error('Error shuffling queue:', error);
     res.status(500).json({ error: 'Failed to shuffle queue' });
+  }
+});
+
+// Clear entire queue
+router.post('/clear-queue', basicAuth, async (req, res) => {
+  try {
+    const db = await dbPromise;
+    await db.run('DELETE FROM queue');
+    await db.run("DELETE FROM sqlite_sequence WHERE name='queue'");
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error clearing queue:', error);
+    res.status(500).json({ error: 'Failed to clear queue' });
   }
 });
 
