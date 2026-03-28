@@ -301,4 +301,36 @@ router.post('/approve-bump/:id', basicAuth, async (req, res) => {
   }
 });
 
+// Chat log page
+router.get('/chat', basicAuth, (req, res) => {
+  res.sendFile(path.join(__dirname, '../../admin/chat.html'));
+});
+
+// Get chat messages (paginated, newest first)
+router.get('/chat-data', basicAuth, async (req, res) => {
+  try {
+    const db = await dbPromise;
+    const messages = await db.all('SELECT id, user, text, color, timestamp FROM messages ORDER BY id DESC LIMIT 200');
+    res.json(messages);
+  } catch (error) {
+    console.error('Error fetching chat messages:', error);
+    res.status(500).json({ error: 'Failed to fetch chat messages' });
+  }
+});
+
+// Delete a chat message and notify all clients
+router.delete('/chat/:id', basicAuth, async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid id' });
+    const db = await dbPromise;
+    await db.run('DELETE FROM messages WHERE id = ?', [id]);
+    ioInstance?.emit('chat:delete', { id });
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting message:', error);
+    res.status(500).json({ error: 'Failed to delete message' });
+  }
+});
+
 export default router;

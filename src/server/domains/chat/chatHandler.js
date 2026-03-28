@@ -15,13 +15,14 @@ export async function handleChat(msg, socket) {
 
   // Save message to DB with user's color
   const db = await dbPromise;
-  await db.run(
+  const result = await db.run(
     "INSERT INTO messages (user, text, color, timestamp) VALUES (?, ?, ?, ?)",
     [username, msg.text, socket.userColor, msg.timestamp || Date.now()]
   );
 
   // Broadcast message to all clients with the user's color
   ioInstance.emit('chat:message', {
+    id: result.lastID,
     user: username,
     text: msg.text,
     color: socket.userColor,

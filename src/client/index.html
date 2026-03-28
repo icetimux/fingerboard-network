@@ -525,7 +525,7 @@ async function initChat() {
     chatMessages.innerHTML = ''; // Clear placeholder
     
     messages.forEach((msg) => {
-      displayChatMessage(msg.user, msg.text, false, msg.color);
+      displayChatMessage(msg.id, msg.user, msg.text, false, msg.color);
     });
     requestAnimationFrame(() => {
       chatMessages.scrollTop = chatMessages.scrollHeight;
@@ -534,12 +534,17 @@ async function initChat() {
 
   // Listen for chat messages from other users
   socket.on('chat:message', (msg) => {
-    displayChatMessage(msg.user, msg.text, false, msg.color);
+    displayChatMessage(msg.id, msg.user, msg.text, false, msg.color);
   });
 
   // Listen for system messages from server (user-only messages)
   socket.on('chat:system', (msg) => {
-    displayChatMessage('FBN', msg.text, true);
+    displayChatMessage(null, 'FBN', msg.text, true);
+  });
+
+  // Admin deleted a message — remove it from the DOM
+  socket.on('chat:delete', ({ id }) => {
+    document.querySelectorAll(`[data-msg-id="${id}"]`).forEach(el => el.remove());
   });
 
   // Welcome message — shown as dismissible banner on every load
@@ -646,11 +651,12 @@ async function initChat() {
   });
 }
 
-function displayChatMessage(username, text, isSystem, color) {
+function displayChatMessage(id, username, text, isSystem, color) {
   const chatMessages = document.getElementById('chat-messages');
   
   const messageDiv = document.createElement('div');
   messageDiv.className = 'space-y-1';
+  if (id != null) messageDiv.dataset.msgId = id;
   
   const usernameEl = document.createElement('p');
   usernameEl.className = `text-[11px] font-bold ${isSystem ? 'text-on-surface-variant' : (color || 'text-primary')} opacity-70`;

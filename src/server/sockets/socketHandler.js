@@ -39,7 +39,7 @@ export function initSockets(io) {
 
     // Send chat history
     const db = await dbPromise;
-    const chatHistory = await db.all("SELECT user, text, color, timestamp FROM messages ORDER BY id ASC LIMIT 50");
+    const chatHistory = await db.all("SELECT id, user, text, color, timestamp FROM messages ORDER BY id ASC LIMIT 50");
     socket.emit('chat:history', chatHistory);
 
     // Send welcome message after history so it appears most recent
