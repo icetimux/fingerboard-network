@@ -121,8 +121,9 @@
 <main class="pt-24 pl-64 min-h-screen">
 <div class="px-12 max-w-7xl mx-auto">
 <!-- Page Header -->
-<div class="mb-12">
+<div class="mb-12 flex items-baseline gap-4">
 <h1 class="text-5xl font-extrabold tracking-tight text-on-surface font-manrope">Queue</h1>
+<span id="queue-count" class="text-2xl font-bold text-on-surface-variant font-manrope"></span>
 </div>
 <!-- Control Bar -->
 <div class="flex items-center justify-between mb-8 bg-surface-container-low p-4 rounded-xl">
@@ -319,6 +320,18 @@ function truncate(str, max = 50) {
   return str && str.length > max ? str.substring(0, max) + '...' : (str || '—');
 }
 
+function highlightCurrentRow() {
+  const id = currentState?.currentVideoId ?? null;
+  document.querySelectorAll('#queueTable tr[data-queue-id]').forEach(row => {
+    const isPlaying = id !== null && Number(row.dataset.queueId) === id;
+    row.classList.toggle('bg-primary/10', isPlaying);
+    row.classList.toggle('border-l-4', isPlaying);
+    row.classList.toggle('border-primary', isPlaying);
+    row.classList.toggle('hover:bg-primary/15', isPlaying);
+    row.classList.toggle('hover:bg-surface-container-low', !isPlaying);
+  });
+}
+
 async function loadPlaybackState() {
   try {
     const res = await fetch('/admin/playback-state');
@@ -328,6 +341,7 @@ async function loadPlaybackState() {
     updatePlayPauseBtn(s.playing);
     updateNowPlaying(s);
     if (s.playing) startCountdown();
+    highlightCurrentRow();
   } catch (err) {
     console.error('Error loading playback state:', err);
   }
@@ -341,6 +355,9 @@ async function loadQueue() {
     const tbody = document.getElementById('queueTable');
     tbody.innerHTML = '';
 
+    const countEl = document.getElementById('queue-count');
+    if (countEl) countEl.textContent = items.length ? `${items.length} item${items.length === 1 ? '' : 's'}` : '';
+
     if (items.length === 0) {
       tbody.innerHTML = '<tr><td colspan="6" class="px-8 py-10 text-center text-on-surface-variant">Queue is empty</td></tr>';
       return;
@@ -348,6 +365,7 @@ async function loadQueue() {
 
     items.forEach(item => {
       const row = document.createElement('tr');
+      row.dataset.queueId = item.id;
       row.className = 'group hover:bg-surface-container-low transition-colors';
       row.innerHTML = `
         <td class="px-8 py-6 text-sm font-medium text-on-surface-variant font-body">${item.id}</td>
@@ -369,6 +387,7 @@ async function loadQueue() {
       `;
       tbody.appendChild(row);
     });
+    highlightCurrentRow();
   } catch (err) {
     console.error('Error loading queue:', err);
   }
@@ -384,6 +403,7 @@ document.addEventListener('DOMContentLoaded', () => {
     updatePlayPauseBtn(s.playing);
     updateNowPlaying(s);
     if (s.playing) startCountdown();
+    highlightCurrentRow();
   });
 });
 </script>

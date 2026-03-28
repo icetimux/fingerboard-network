@@ -121,7 +121,10 @@
 <!-- Page Header -->
 <div class="mb-12">
 <h1 class="text-5xl font-extrabold tracking-tight text-on-surface font-manrope">Bumps</h1>
-<p class="mt-3 text-sm text-on-surface-variant">Short interstitial clips submitted via <code>/bump &lt;url&gt;</code> in chat. Approved bumps play between queue entries.</p>
+</div>
+<!-- Action Bar -->
+<div class="flex items-center gap-2 mb-6">
+  <button onclick="removeAllBumps()" class="ml-auto flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold rounded-full bg-error text-on-error hover:opacity-90 transition-all active:scale-95"><span class="material-symbols-outlined text-base">delete</span>Remove All</button>
 </div>
 <!-- Dashboard Content: Data Table -->
 <div class="bg-surface-container-lowest rounded-xl shadow-sm border border-surface-container overflow-hidden">
@@ -251,6 +254,18 @@ async function loadBumps() {
   } catch (error) {
     console.error('Error loading bumps:', error);
     alert('Error loading bumps');
+  }
+}
+
+async function removeAllBumps() {
+  if (!confirm('Remove all bumps? This will also delete their downloaded files.')) return;
+  try {
+    const response = await fetch('/admin/bumps', { method: 'DELETE' });
+    if (!response.ok) { alert('Failed to remove all bumps'); return; }
+    loadBumps();
+  } catch (error) {
+    console.error('Error removing all bumps:', error);
+    alert('Error removing all bumps');
   }
 }
 

@@ -18,8 +18,8 @@ const __dirname = path.dirname(__filename);
 
 const router = express.Router();
 
-router.get('/', basicAuth, async (req, res) => {
-  res.sendFile(path.join(__dirname, '../../admin/index.html'));
+router.get('/', basicAuth, (req, res) => {
+  res.redirect('/admin/queue');
 });
 
 router.get('/submissions', basicAuth, async (req, res) => {
@@ -238,6 +238,23 @@ router.delete('/queue/:id', basicAuth, async (req, res) => {
   } catch (error) {
     console.error('Error deleting queue entry:', error);
     res.status(500).json({ error: 'Failed to delete queue entry' });
+  }
+});
+
+// Delete all bumps (and their files)
+router.delete('/bumps', basicAuth, async (req, res) => {
+  try {
+    const db = await dbPromise;
+    const all = await db.all('SELECT file_path FROM bumps WHERE file_path IS NOT NULL');
+    await Promise.all(all.map(row => unlink(row.file_path).catch(err => {
+      if (err.code !== 'ENOENT') console.error('Error deleting bump file:', err);
+    })));
+    await db.run('DELETE FROM bumps');
+    await db.run("DELETE FROM sqlite_sequence WHERE name='bumps'");
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting all bumps:', error);
+    res.status(500).json({ error: 'Failed to delete all bumps' });
   }
 });
 
