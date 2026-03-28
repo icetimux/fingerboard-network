@@ -1,13 +1,22 @@
 import { state } from './state.js';
 import { getNextVideo, getVideoWithMedia, getRandomApprovedBump } from '../queue/queueService.js';
 import { ioInstance } from '../../sockets/socketHandler.js';
+import { resolve, relative } from 'path';
+
+const VIDEO_DIR = resolve(process.env.VIDEO_DIR || './videos');
+
+function filePathToUrl(filePath) {
+  if (!filePath) return null;
+  // Convert absolute or relative stored path to a web URL under /videos/
+  return '/videos/' + relative(VIDEO_DIR, resolve(filePath));
+}
 
 export async function buildEnrichedState() {
   if (state.currentBump) {
     const b = state.currentBump;
     return {
       ...state,
-      filePath: b.file_path ? '/' + b.file_path : null,
+      filePath: filePathToUrl(b.file_path),
       duration: b.duration ?? null,
       title: b.title ?? null,
       channel: b.channel ?? null,
@@ -23,7 +32,7 @@ export async function buildEnrichedState() {
   let nextVideo = null;
   if (state.currentVideoId) {
     const vid = await getVideoWithMedia(state.currentVideoId);
-    filePath = vid?.file_path ? '/' + vid.file_path : null;
+    filePath = filePathToUrl(vid?.file_path);
     duration = vid?.duration ?? null;
     title = vid?.title ?? null;
     channel = vid?.channel ?? null;

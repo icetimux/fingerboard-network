@@ -3,7 +3,9 @@ import { bumpRepository } from './bumpRepository.js';
 import { downloadVideo } from '../media/downloader.js';
 import { ioInstance } from '../../sockets/socketHandler.js';
 
-const BUMP_DIR = './videos/bumps';
+import { resolve, join } from 'path';
+
+const BUMP_DIR = join(resolve(process.env.VIDEO_DIR || './videos'), 'bumps');
 
 const downloadQueue = new PQueue({ concurrency: 2 });
 

@@ -20,6 +20,6 @@ router.get('/debug', (req, res) => {
 router.use('/static', express.static(path.join(__dirname, '../../client')));
 
 // Serve downloaded videos
-router.use('/videos', express.static(path.resolve('./videos')));
+router.use('/videos', express.static(path.resolve(process.env.VIDEO_DIR || './videos')));
 
 export default router;

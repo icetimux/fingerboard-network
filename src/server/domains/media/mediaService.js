@@ -7,7 +7,9 @@ import { enqueue } from '../queue/queueService.js';
 import { playbackController } from '../playback/controller.js';
 import { state as playbackState } from '../playback/state.js';
 
-const VIDEO_DIR = './videos';
+import { resolve } from 'path';
+
+const VIDEO_DIR = resolve(process.env.VIDEO_DIR || './videos');
 
 const downloadQueue = new PQueue({ concurrency: 2 });
 

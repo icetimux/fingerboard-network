@@ -1,0 +1,20 @@
+services:
+  app:
+    build: .
+    ports:
+      - "80:3000"
+    volumes:
+      # Persistent data: database + downloaded videos
+      - ./data:/app/data
+    environment:
+      PORT: "3000"
+      DB_PATH: /app/data/db.sqlite
+      VIDEO_DIR: /app/data/videos
+      YT_DLP_BIN: /app/bin/yt-dlp
+      ADMIN_USER: ${ADMIN_USER:-admin}
+      ADMIN_PASS: ${ADMIN_PASS:-changeme}
+      SESSION_SECRET: ${SESSION_SECRET:-change-me-to-a-long-random-string}
+      SITE_URL: ${SITE_URL:-}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      RESEND_FROM: ${RESEND_FROM:-}
+    restart: unless-stopped

@@ -6,7 +6,7 @@ import { ioInstance } from '../../sockets/socketHandler.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const YT_DLP = path.resolve(__dirname, '../../../../bin/yt-dlp');
+const YT_DLP = process.env.YT_DLP_BIN || path.resolve(__dirname, '../../../../bin/yt-dlp');
 
 const DOWNLOAD_TIMEOUT = 60 * 60 * 1000; // 1 hour timeout
 

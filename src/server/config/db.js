@@ -1,10 +1,17 @@
 import sqlite3 from 'sqlite3';
 import { open } from 'sqlite';
+import { mkdir } from 'fs/promises';
+import { dirname, resolve } from 'path';
 
-const dbPromise = open({
-  filename: './database/db.sqlite',
-  driver: sqlite3.Database
-});
+const DB_PATH = resolve(process.env.DB_PATH || './database/db.sqlite');
+
+async function openDb() {
+  const dir = dirname(DB_PATH);
+  await mkdir(dir, { recursive: true });
+  return open({ filename: DB_PATH, driver: sqlite3.Database });
+}
+
+const dbPromise = openDb();
 
 (async () => {
   const db = await dbPromise;
@@ -94,11 +101,11 @@ const dbPromise = open({
     )
   `);
 
-  // Seed default welcome message if not set
+  // Always overwrite welcome message so code changes are reflected on redeploy
   await db.run(`
-    INSERT OR IGNORE INTO settings (key, value) VALUES (
+    INSERT OR REPLACE INTO settings (key, value) VALUES (
       'welcome_message',
-      '<strong class="text-on-surface text-sm block mb-2">Welcome to Fingerboard Network!</strong><p class="text-on-surface/70 text-xs mb-3 leading-relaxed">A synchronized video channel — everyone watches together in real time.</p><div class="flex flex-col gap-2 text-xs text-on-surface/80"><div class="flex items-start gap-2"><span class="material-symbols-outlined text-primary shrink-0" style="font-size:14px">chat_bubble</span><span>Chat with everyone in the sidebar</span></div><div class="flex items-start gap-2"><span class="material-symbols-outlined text-primary shrink-0" style="font-size:14px">movie</span><span class="whitespace-nowrap">Submit a video: <code class="bg-primary/20 text-primary px-1 py-0.5 rounded text-[10px]">/submit [YouTube URL]</code></span></div></div>'
+      '<strong class="text-on-surface text-sm block mb-2">Welcome to Fingerboard Network!</strong><p class="text-on-surface/70 text-xs mb-3 leading-relaxed">A synchronized video channel — everyone watches together in real time.</p><div class="flex flex-col gap-2 text-xs text-on-surface/80"><div class="flex items-start gap-2"><span class="material-symbols-outlined text-primary shrink-0" style="font-size:14px">chat_bubble</span><span>Chat with everyone in the sidebar</span></div><div class="flex items-start gap-2"><span class="material-symbols-outlined text-primary shrink-0" style="font-size:14px">movie</span><span class="whitespace-nowrap">Submit a video: <code class="bg-primary/20 text-primary px-1 py-0.5 rounded text-[10px]">/submit [YouTube URL]</code></span></div><div class="flex items-start gap-2"><span class="material-symbols-outlined text-primary shrink-0" style="font-size:14px">movie_filter</span><span class="whitespace-nowrap">Submit a bump: <code class="bg-primary/20 text-primary px-1 py-0.5 rounded text-[10px]">/bump [YouTube URL]</code></span></div></div></div>'
     )
   `);
 })();

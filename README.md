@@ -12,7 +12,7 @@ A synchronized internet TV server — community members submit YouTube videos an
 - **Drift correction**: every 5 seconds clients ping the server, measure round-trip latency, and either hard-seek (>0.5s drift) or nudge `playbackRate` (0.08–0.5s drift) to stay in sync
 
 ### Queue
-- DB-backed playback queue ordered by submission ID (newest first)
+- DB-backed playback queue (FIFO — first submitted, first played)
 - Admin can shuffle, clear the entire queue, or remove individual entries
 - Auto-starts playback when the first video is approved if the player is idle
 
@@ -101,50 +101,110 @@ A synchronized internet TV server — community members submit YouTube videos an
 
 ---
 
-## Setup
+## Deployment (Docker)
 
 ### Prerequisites
-- Node.js 18+
-- `yt-dlp` binary at `bin/yt-dlp` (or on `PATH`)
 
-### Install
+- Docker Engine 24+ and Docker Compose v2
+- Port 80 open on the server
+
+### 1. Clone the repo
 
 ```bash
 git clone <repo-url>
 cd fingerboard-network
-npm install
 ```
 
-### Configure
+### 2. Create the data directory
 
-Create a `.env` file:
-
-```env
-PORT=3000
-SESSION_SECRET=your-secret-here
-ADMIN_USER=admin
-ADMIN_PASS=yourpassword
-```
-
-### Run
+`./data` means a folder called `data` in the root of the cloned repo on your server. It is bind-mounted into the container at `/app/data` and holds the SQLite database and all downloaded videos. It is listed in `.gitignore` so git will never touch it.
 
 ```bash
-# Development (auto-restart on changes)
-npm run dev
-
-# Production
-npm start
+mkdir -p data
 ```
+
+> **Permissions gotcha:** The container runs as the `node` user (UID 1000). If the `data/` directory is owned by root (e.g. you cloned as root and ran `mkdir` as root), the app will fail to write the database file on first start. Fix with:
+> ```bash
+> chown -R 1000:1000 data/
+> ```
+> You only need to do this once. The directory persists across `git pull` and container restarts.
+
+### 3. Configure environment
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` and set at minimum:
+
+```env
+ADMIN_USER=admin
+ADMIN_PASS=a-strong-password
+SESSION_SECRET=a-long-random-string-at-least-32-chars
+SITE_URL=https://your-domain.com
+
+# Optional — needed only if you use the password reset email feature
+RESEND_API_KEY=re_...
+RESEND_FROM=noreply@your-domain.com
+```
+
+> **Security note:** Never commit `.env` to version control. It is listed in `.gitignore`.
+
+### 4. Build and start
+
+```bash
+docker compose up -d --build
+```
+
+On the first build Docker installs `ffmpeg` and `python3` (required by yt-dlp) via Alpine's package manager, then copies `bin/yt-dlp` from the repo into the image. This may take a minute on a fresh server.
+
+### 5. Verify
+
+```bash
+docker compose logs -f
+```
+
+You should see `Server running on http://localhost:3000`. The app is reachable externally on port 80.
+
+### Updating
+
+```bash
+git pull
+docker compose up -d --build
+```
+
+The `data/` directory is never touched during updates — your database and videos are safe.
 
 ### Access
 
 | URL | Description |
 |-----|-------------|
-| `http://localhost:3000` | Public media player + chat |
-| `http://localhost:3000/admin` | Admin panel (Basic Auth) |
-| `http://localhost:3000/admin/submissions` | Review submissions |
-| `http://localhost:3000/admin/queue` | Manage playback queue |
-| `http://localhost:3000/admin/bumps` | Manage bumps |
+| `http://your-server` | Public media player + chat |
+| `http://your-server/admin` | Admin panel (Basic Auth) |
+| `http://your-server/admin/submissions` | Review submissions |
+| `http://your-server/admin/queue` | Manage playback queue |
+| `http://your-server/admin/bumps` | Manage bumps |
+
+---
+
+## Local Development (without Docker)
+
+### Prerequisites
+- Node.js 22+
+- `yt-dlp` binary placed at `bin/yt-dlp`
+
+### Install & run
+
+```bash
+npm install
+cp .env.example .env
+# edit .env as needed
+npm run dev
+```
+
+App runs on `http://localhost:3000`.
+
+> **Note:** The `database/` and `videos/` directories are created automatically on first run if they don't exist.
 
 ---
 
