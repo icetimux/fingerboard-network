@@ -599,31 +599,24 @@ async function initChat() {
   socket.on('state', handleState);
 
   // ---- Drift correction ----
-  // Every 5s, ping the server to measure RTT, then compare expected vs actual
-  // video position. Hard-seek if drift > 0.5s; nudge playbackRate for smaller drift.
-  let lastServerState = null;
-  const DRIFT_HARD_SEEK = 0.5;   // seconds — hard seek threshold
-  const DRIFT_NUDGE    = 0.08;   // seconds — start nudging playbackRate
-  const NUDGE_RATE     = 0.05;   // playbackRate offset when nudging
+  // Ping the server every 30s. Only hard-seek if drift is large (> 5s),
+  // e.g. after a long buffer stall or tab sleep. Never nudge playbackRate
+  // (causes stutters on large files). Cooldown prevents repeated seeks.
+  const DRIFT_HARD_SEEK = 5.0;  // seconds — only fix very large drift
+  let seekCooldown = false;
 
-  socket.on('sync:pong', ({ t, serverTime, startedAt, playing, pausedAt }) => {
-    if (!video || !playing || !startedAt) {
-      if (video) video.playbackRate = 1.0;
-      return;
-    }
+  socket.on('sync:pong', ({ t, serverTime, startedAt, playing }) => {
+    if (!video || !playing || !startedAt || video.paused || video.ended) return;
+    if (video.readyState < 3 || video.seeking || seekCooldown) return;
+
     const rtt = Date.now() - t;
-    const adjustedNow = serverTime + rtt / 2;
-    const expected = (adjustedNow - startedAt) / 1000;
-    const actual = video.currentTime;
-    const drift = expected - actual; // positive = we're behind
+    const expected = (serverTime + rtt / 2 - startedAt) / 1000;
+    const drift = expected - video.currentTime;
 
     if (Math.abs(drift) > DRIFT_HARD_SEEK) {
       video.currentTime = Math.max(0, expected);
-      video.playbackRate = 1.0;
-    } else if (Math.abs(drift) > DRIFT_NUDGE) {
-      video.playbackRate = drift > 0 ? 1.0 + NUDGE_RATE : 1.0 - NUDGE_RATE;
-    } else {
-      video.playbackRate = 1.0;
+      seekCooldown = true;
+      setTimeout(() => { seekCooldown = false; }, 30000);
     }
   });
 
@@ -631,7 +624,7 @@ async function initChat() {
     if (video && !video.paused && !video.ended) {
       socket.emit('sync:ping', { t: Date.now() });
     }
-  }, 5000);
+  }, 30000);
   // ---- End drift correction ----
 
   // Handle Enter key in input
