@@ -1,276 +1,229 @@
 # Fingerboard Network
 
-A synchronized internet TV server — community members submit YouTube videos and bumps via chat, admins review and approve them, and every connected client watches in perfect sync.
+Fingerboard Network is a synchronized watch-party server where users submit YouTube videos and bumps through chat, admins approve content, and all connected clients stay aligned on shared playback.
 
----
+## Core Capabilities
 
-## Features
+- Real-time synchronized playback for all connected clients.
+- Periodic drift correction to recover from tab sleep, buffering stalls, or reconnect lag.
+- Moderated submission workflow for both full videos and bump clips.
+- Admin dashboard for queue control, approvals, chat moderation, and live stats.
+- Session-based user accounts with password reset support.
 
-### Synchronized Playback
-- All clients play the same video at the same position in real time
-- Server tracks wall-clock `startedAt` for accurate position across connects
-- **Drift correction**: every 30 seconds clients ping the server and hard-seek if drift exceeds 5 seconds (e.g. after a long buffer stall or tab sleep) — normal small drift is intentionally ignored to prevent stuttering
+## Synchronization Model
 
-### Queue
-- DB-backed playback queue (FIFO — first submitted, first played)
-- Admin can shuffle, clear the entire queue, or remove individual entries
-- Auto-starts playback when the first video is approved if the player is idle
+- The server tracks playback using wall-clock timing (`startedAt`) and current play/pause state.
+- Clients run drift checks every 30 seconds via `sync:ping` and `sync:pong`.
+- Clients hard-seek only when drift exceeds 5 seconds.
+- Small drift is intentionally ignored to avoid unnecessary seeking and stutter.
 
-### Bumps
-- Short interstitial clips played between videos
-- Submitted via `/bump <url>` in chat, reviewed and approved by admins
-- **Bump Loop mode**: plays random approved bumps back-to-back (no repeat until all played), automatically exits when a video is queued
+## Submission and Playback Flow
 
-### Community Submissions
-- Chat commands: `/submit <youtube-url>` and `/bump <youtube-url>`
-- Submissions enter `pending` state — **no download happens until admin approves**
-- Approval triggers download (`yt-dlp`), then moves to `approved` and enqueues automatically
-- Status flow: `pending` → `downloading` → `approved` (or `failed`)
-- Removing a submission or bump also deletes the video file from disk
+1. Users submit content via chat commands (`/submit` or `/bump`).
+2. Content is stored as `pending` and is not downloaded yet.
+3. Admin approval triggers `yt-dlp` download.
+4. Status transitions: `pending` -> `downloading` -> `approved` or `failed`.
+5. Approved videos are automatically added to the playback queue.
+6. If nothing is playing, first approved video auto-starts playback.
 
-### Admin Panel
-- HTTP Basic Auth protected
-- **Submissions page**: filter by status (All / Approved / Downloading / Failed), approve, remove, Remove All
-- **Queue page**: view queue, remove entries, shuffle, clear queue
-- **Bumps page**: approve, remove bumps; trigger Bump Loop
-- **Stats page**: live viewer count and server uptime
-- **Chat Log page**: view and delete chat messages in real time
-- Live playback controls: Play, Pause, Skip
+### Bump Behavior
 
-### Chat
-- Real-time chat via Socket.IO
-- `/submit` and `/bump` commands with URL validation and deduplication
-- System messages for submission confirmations and errors
-- Persistent chat history (last 50 messages)
-- Per-user color assignment
+- Bumps are short interstitial clips between videos.
+- Admins can start Bump Loop mode from the admin panel.
+- In Bump Loop mode, random approved bumps play continuously.
+- The current implementation avoids immediate repeat of the most recently played bump when possible.
 
-### Auth
-- User accounts with sessions (`express-session`)
-- Password hashing with `bcryptjs`
-- Password reset flow
+## Admin Features
 
----
+- HTTP Basic Auth protection for admin routes.
+- Submissions management (approve/remove/remove all).
+- Queue operations (remove, shuffle, clear).
+- Bump management (approve/remove/remove all, start bump loop).
+- Playback controls (play, pause, skip).
+- Chat log moderation (view/delete messages).
+- Live stats endpoint with connected clients and content counts.
 
-## Architecture
+## High-Level Architecture
 
-```
-  Clients (browser)
-  ├── index.html       Media player + chat UI
-  └── admin/*.html     Admin panel pages
-        │
-        │  WebSocket (Socket.IO)          HTTP (Express)
-        │  state, queue, chat:*           adminRoutes, publicRoutes
-        ▼                                        │
-  ┌─────────────────────────────────────────────┤
-  │              Socket.IO Server               │
-  │  socketHandler.js                           │
-  │  sync:ping ↔ sync:pong (drift correction)   │
-  └────────────┬────────────────────────────────┘
-               │
-       ┌───────┴────────┐
-       │                │
-  ┌────▼────┐     ┌─────▼──────┐
-  │Playback │     │    Chat    │
-  │ Domain  │     │   Domain   │
-  │         │     │            │
-  │state.js │     │chatHandler │
-  │control  │     │commandHand-│
-  │ler.js   │     │  ler.js    │
-  │schedul  │     │commandPars-│
-  │ er.js   │     │  er.js     │
-  └────┬────┘     └─────┬──────┘
-       │                │
-  ┌────▼────────────────▼──────┐
-  │           Domains          │
-  ├────────────────────────────┤
-  │  Queue   │ Media  │ Bumps  │
-  │  Service │Service │Service │
-  │  Repo    │ Repo   │ Repo   │
-  └────────────────────────────┘
-               │
-  ┌────────────▼───────────────┐
-  │       SQLite Database      │
-  │  media · queue · bumps     │
-  │  messages · users          │
-  └────────────────────────────┘
-               │
-  ┌────────────▼───────────────┐
-  │      yt-dlp (binary)       │
-  │  Downloads on approval     │
-  │  videos/ · videos/bumps/   │
-  └────────────────────────────┘
-```
+- Client UI: public player/chat and separate admin pages.
+- HTTP API: Express routes for public, auth, and admin functionality.
+- Real-time layer: Socket.IO for state sync, chat, and status events.
+- Domain modules: playback, queue, media, bumps, auth, chat.
+- Data store: SQLite for media, queue, bumps, users, settings, messages, and reset tokens.
+- Download worker: `yt-dlp` + `ffmpeg` pipeline for approved media.
 
----
+## Tech Stack
+
+- Node.js 22 (ES modules)
+- Express 5
+- Socket.IO
+- SQLite (`sqlite` + `sqlite3`)
+- `p-queue` for concurrency-limited download jobs
+- `bcryptjs` + `express-session` for authentication
+- Resend API (optional) for password reset email
 
 ## Deployment (Docker)
 
-### Prerequisites
+### Requirements
 
-- Docker Engine 24+ and Docker Compose v2
-- nginx installed on the host (acts as reverse proxy for HTTPS)
-- Ports 80 and 443 open on the server
+- Docker Engine 24+
+- Docker Compose v2+
+- Reverse proxy for TLS termination (nginx example shown below)
 
-### 1. Clone the repo
+### 1. Clone and prepare data
 
 ```bash
 git clone <repo-url>
 cd fingerboard-network
-```
-
-### 2. Create the data directory
-
-`./data` means a folder called `data` in the root of the cloned repo on your server. It is bind-mounted into the container at `/app/data` and holds the SQLite database and all downloaded videos. It is listed in `.gitignore` so git will never touch it.
-
-```bash
 mkdir -p data
 ```
 
-> **Permissions gotcha:** The container runs as the `node` user (UID 1000). If the `data/` directory is owned by root (e.g. you cloned as root and ran `mkdir` as root), the app will fail to write the database file on first start. Fix with:
-> ```bash
-> chown -R 1000:1000 data/
-> ```
-> You only need to do this once. The directory persists across `git pull` and container restarts.
+The `data` directory is bind-mounted to `/app/data` and stores:
 
-### 3. Configure environment
+- SQLite database (`/app/data/db.sqlite`)
+- downloaded videos (`/app/data/videos`)
+
+If you created `data/` as root, fix ownership once:
+
+```bash
+chown -R 1000:1000 data/
+```
+
+### 2. Configure environment
 
 ```bash
 cp .env.example .env
 ```
 
-Edit `.env` and set at minimum:
+Recommended minimum values:
 
 ```env
 ADMIN_USER=admin
-ADMIN_PASS=a-strong-password
-SESSION_SECRET=a-long-random-string-at-least-32-chars
+ADMIN_PASS=replace-with-strong-password
+SESSION_SECRET=replace-with-long-random-secret
 SITE_URL=https://your-domain.com
 
-# Optional — needed only if you use the password reset email feature
-RESEND_API_KEY=re_...
+# Optional for password reset emails
+RESEND_API_KEY=
 RESEND_FROM=noreply@your-domain.com
 ```
 
-> **Security note:** Never commit `.env` to version control. It is listed in `.gitignore`.
-
-### 4. Set up nginx + HTTPS
-
-The container binds to `127.0.0.1:3000` only — nginx sits in front and handles HTTPS.
-
-```bash
-apt install -y nginx certbot python3-certbot-nginx
-```
-
-Create `/etc/nginx/sites-available/fingerboard-network`:
-
-```nginx
-server {
-    listen 80;
-    server_name your-domain.com www.your-domain.com;
-
-    location / {
-        proxy_pass http://127.0.0.1:3000;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-}
-```
-
-```bash
-ln -s /etc/nginx/sites-available/fingerboard-network /etc/nginx/sites-enabled/
-systemctl enable --now nginx
-certbot --nginx -d your-domain.com -d www.your-domain.com
-```
-
-Certbot automatically configures HTTPS and sets up auto-renewal.
-
-### 5. Build and start
+### 3. Build and start
 
 ```bash
 docker compose up -d --build
 ```
 
-On the first build Docker installs `ffmpeg` and `python3` (required by yt-dlp) via Alpine's package manager, then copies `bin/yt-dlp` from the repo into the image. This may take a minute on a fresh server.
-
-### 6. Verify
+### 4. Verify
 
 ```bash
 docker compose logs -f
 ```
 
-You should see `Server running on http://localhost:3000`. The app is reachable externally via nginx at `https://your-domain.com`.
+Expected startup log includes:
 
-### Updating
+```text
+Server running on http://localhost:3000
+```
+
+### 5. Update
 
 ```bash
 git pull
 docker compose up -d --build
 ```
 
-> **Note:** If nginx config or SSL certs are already in place, you don't need to redo those steps — just rebuild the container.
+`data/` is persistent, so content and database survive rebuilds.
 
-The `data/` directory is never touched during updates — your database and videos are safe.
+## Reverse Proxy (nginx Example)
 
-### Access
+The compose service binds to `127.0.0.1:3000`, so a proxy can expose HTTPS publicly.
 
-| URL | Description |
-|-----|-------------|
-| `https://your-domain.com` | Public media player + chat |
-| `https://your-domain.com/admin` | Admin panel (Basic Auth) |
-| `https://your-domain.com/admin/submissions` | Review submissions |
-| `https://your-domain.com/admin/bumps` | Manage bumps |
-| `https://your-domain.com/admin/queue` | Manage playback queue |
-| `https://your-domain.com/admin/stats` | Live stats |
-| `https://your-domain.com/admin/chat` | Chat log |
+```nginx
+server {
+  listen 80;
+  server_name your-domain.com www.your-domain.com;
 
----
+  location / {
+    proxy_pass http://127.0.0.1:3000;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+  }
+}
+```
 
-## Local Development (without Docker)
+For Debian/Ubuntu hosts, one typical setup is:
 
-### Prerequisites
+```bash
+sudo apt install -y nginx certbot python3-certbot-nginx
+sudo certbot --nginx -d your-domain.com -d www.your-domain.com
+```
+
+## Local Development
+
+### Requirements
+
 - Node.js 22+
-- `yt-dlp` binary placed at `bin/yt-dlp`
+- Executable `yt-dlp` at `bin/yt-dlp`
 
-### Install & run
+### Run
 
 ```bash
 npm install
 cp .env.example .env
-# edit .env as needed
 npm run dev
 ```
 
-App runs on `http://localhost:3000`.
+Local defaults:
 
-> **Note:** The `database/` and `videos/` directories are created automatically on first run if they don't exist.
+- App: `http://localhost:3000`
+- DB: `./database/db.sqlite`
+- Video storage: `./videos`
 
----
+Database and media directories are created automatically if missing.
+
+## Environment Variables
+
+| Variable | Required | Description |
+|---|---|---|
+| `ADMIN_USER` | yes | HTTP Basic Auth username for admin routes |
+| `ADMIN_PASS` | yes | HTTP Basic Auth password for admin routes |
+| `SESSION_SECRET` | yes | Session signing secret |
+| `SITE_URL` | recommended | Base URL used in password reset flow |
+| `RESEND_API_KEY` | optional | Enables email-based password reset |
+| `RESEND_FROM` | optional | Sender email address for reset emails |
+| `DB_PATH` | optional | SQLite database path |
+| `VIDEO_DIR` | optional | Root directory for downloaded media |
+| `YT_DLP_BIN` | optional | Path to `yt-dlp` binary |
 
 ## Chat Commands
 
 | Command | Description |
-|---------|-------------|
-| `/submit <url>` | Submit a YouTube video for admin review |
-| `/bump <url>` | Submit a bump clip for admin review |
+|---|---|
+| `/submit <url>` | Submit a video for admin review |
+| `/bump <url>` | Submit a bump for admin review |
 
-Videos and bumps remain `pending` until an admin approves them. Approval triggers the download.
+## Default URLs
 
----
+| URL | Purpose |
+|---|---|
+| `/` | Public player + chat |
+| `/debug` | Debug client page |
+| `/admin` | Admin entry point (redirects to queue) |
+| `/admin/submissions` | Submission moderation |
+| `/admin/queue` | Queue controls |
+| `/admin/bumps` | Bump moderation and loop controls |
+| `/admin/stats` | Live system stats |
+| `/admin/chat` | Chat moderation |
 
-## Dependencies
+## Operational Notes
 
-| Package | Purpose |
-|---------|---------|
-| `express` | Web framework & routing |
-| `socket.io` | Real-time WebSocket communication |
-| `sqlite` / `sqlite3` | Database |
-| `p-queue` | Concurrency-limited download queue |
-| `bcryptjs` | Password hashing |
-| `express-session` | User sessions |
-| `resend` | Password reset emails (optional) |
-| `nodemon` | Dev auto-restart |
+- Download work is queued with concurrency limits for stability.
+- Deleting submissions or bumps removes associated files when present.
+- Last 50 chat messages are sent to newly connected clients.
+- No automated test suite is currently configured (`npm test` is a placeholder).
