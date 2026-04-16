@@ -301,6 +301,32 @@ router.post('/approve-bump/:id', basicAuth, async (req, res) => {
   }
 });
 
+// Get auto-approve setting
+router.get('/settings/auto-approve', basicAuth, async (req, res) => {
+  try {
+    const db = await dbPromise;
+    const row = await db.get("SELECT value FROM settings WHERE key = 'auto_approve'");
+    res.json({ enabled: row?.value === '1' });
+  } catch (error) {
+    console.error('Error getting auto-approve setting:', error);
+    res.status(500).json({ error: 'Failed to get setting' });
+  }
+});
+
+// Toggle auto-approve setting
+router.post('/settings/auto-approve', basicAuth, async (req, res) => {
+  try {
+    const db = await dbPromise;
+    const row = await db.get("SELECT value FROM settings WHERE key = 'auto_approve'");
+    const newValue = row?.value === '1' ? '0' : '1';
+    await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('auto_approve', ?)", [newValue]);
+    res.json({ enabled: newValue === '1' });
+  } catch (error) {
+    console.error('Error updating auto-approve setting:', error);
+    res.status(500).json({ error: 'Failed to update setting' });
+  }
+});
+
 // Chat log page
 router.get('/chat', basicAuth, (req, res) => {
   res.sendFile(path.join(__dirname, '../../admin/chat.html'));

@@ -6,6 +6,7 @@ import { ioInstance } from '../../sockets/socketHandler.js';
 import { enqueue } from '../queue/queueService.js';
 import { playbackController } from '../playback/controller.js';
 import { state as playbackState } from '../playback/state.js';
+import dbPromise from '../../config/db.js';
 
 import { resolve } from 'path';
 
@@ -23,6 +24,12 @@ async function processVideo(url) {
 
   const videoId = await mediaRepository.insertPending(url);
   ioInstance?.emit('media:status', { videoId, status: 'pending' });
+
+  const db = await dbPromise;
+  const autoApproveRow = await db.get("SELECT value FROM settings WHERE key = 'auto_approve'");
+  if (autoApproveRow?.value === '1') {
+    await processApproval(videoId);
+  }
 }
 
 async function processApproval(videoId) {

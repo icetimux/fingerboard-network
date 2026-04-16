@@ -101,6 +101,9 @@ const dbPromise = openDb();
     )
   `);
 
+  // Default auto_approve to off (only insert if not already set)
+  await db.run(`INSERT OR IGNORE INTO settings (key, value) VALUES ('auto_approve', '0')`);
+
   // Always overwrite welcome message so code changes are reflected on redeploy
   await db.run(`
     INSERT OR REPLACE INTO settings (key, value) VALUES (
