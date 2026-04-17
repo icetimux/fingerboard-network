@@ -7,6 +7,13 @@ let transitioning = false;
 function checkVideoEnd() {
   if (!state.playing || transitioning) return;
 
+  // Playing but idle (queue was empty when play was pressed) — try to start
+  if (!state.currentBump && !state.currentVideoId) {
+    transitioning = true;
+    playbackController.next().finally(() => { transitioning = false; });
+    return;
+  }
+
   if (state.currentBump) {
     const duration = state.currentBump.duration;
     if (!duration) return;

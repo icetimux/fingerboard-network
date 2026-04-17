@@ -67,9 +67,10 @@ export const playbackController = {
     if (!state.currentVideoId) {
       const nextMedia = await getNextVideo(null);
       if (!nextMedia) {
-        // Queue empty — re-enter bump loop
-        state.bumpLoopMode = true;
-        await playBump();
+        // Queue empty — stay in playing state; scheduler will start when videos arrive
+        state.playing = true;
+        state.currentVideoId = null;
+        ioInstance.emit('state', await buildEnrichedState());
         return;
       }
       state.currentVideoId = nextMedia.id;
@@ -111,9 +112,20 @@ export const playbackController = {
         ioInstance.emit('state', await buildEnrichedState());
         return;
       }
-      // Queue exhausted — switch to bump loop
-      state.bumpLoopMode = true;
-      await playBump(lastBumpId);
+      // Queue exhausted — loop back to start
+      state.currentVideoId = null;
+      const loopMedia = await getNextVideo(null);
+      if (loopMedia) {
+        state.currentVideoId = loopMedia.id;
+        state.startedAt = Date.now();
+        state.pausedAt = 0;
+        state.playing = true;
+        ioInstance.emit('state', await buildEnrichedState());
+        return;
+      }
+      // Queue truly empty — stop
+      state.playing = false;
+      ioInstance.emit('state', await buildEnrichedState());
       return;
     }
 
@@ -138,9 +150,19 @@ export const playbackController = {
         ioInstance.emit('state', await buildEnrichedState());
         return;
       }
-      // Queue exhausted, no bumps — stop
-      state.playing = false;
+      // Queue exhausted, no bumps — loop back to start
       state.currentVideoId = null;
+      const loopMedia = await getNextVideo(null);
+      if (loopMedia) {
+        state.currentVideoId = loopMedia.id;
+        state.startedAt = Date.now();
+        state.pausedAt = 0;
+        state.playing = true;
+        ioInstance.emit('state', await buildEnrichedState());
+        return;
+      }
+      // Queue truly empty — stop
+      state.playing = false;
       ioInstance.emit('state', await buildEnrichedState());
       return;
     }
